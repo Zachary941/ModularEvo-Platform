@@ -40,7 +40,9 @@ def health_check():
     return {"status": "ok", "version": "0.1.0"}
 
 
-# ---- 后续 API 路由将在 P2/P4 阶段添加 ----
-# from api import chapter3, chapter4, graph
-# app.include_router(chapter3.router, prefix=f"{API_PREFIX}/ch3", tags=["Chapter 3"])
-# app.include_router(chapter4.router, prefix=f"{API_PREFIX}/ch4", tags=["Chapter 4"])
+# ---- API 路由注册 ----
+from api.chapter3 import router as ch3_router
+app.include_router(ch3_router, prefix=f"{API_PREFIX}/ch3", tags=["Chapter 3"])
+
+# from api.chapter4 import router as ch4_router
+# app.include_router(ch4_router, prefix=f"{API_PREFIX}/ch4", tags=["Chapter 4"])

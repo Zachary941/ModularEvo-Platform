@@ -101,23 +101,50 @@ demo_system/
 │   │   │   └── EvalResult.vue      # 评测结果展示
 │   │   └── api/                 # Axios 接口封装
 │   └── ...
-├── algorithm/                   # 算法适配层 (桥接现有代码)
+├── algorithm/                   # 算法适配层 (自包含，不依赖外部代码)
 │   ├── __init__.py
 │   ├── chapter3/                # 第三章适配（多文件，按职责拆分）
 │   │   ├── __init__.py
 │   │   ├── config.py            # 路径配置 & 预置资源路径常量
 │   │   ├── model_loader.py      # 模型加载：CodeBERT / mask模块 / 微调模型
-│   │   ├── modularizer.py       # 模块化训练逻辑 (封装 Tran_SeaM/modularizer.py)
-│   │   ├── evaluator.py         # 评测逻辑 (封装 task_eval/code_clone_eval + nl_code_search_eval)
-│   │   └── merger.py            # 合并逻辑 (封装 task_merge/merge_methods/MergingMethod)
+│   │   ├── modularizer.py       # 模块化训练逻辑 (预留接口)
+│   │   ├── evaluator.py         # 评测逻辑
+│   │   ├── merger.py            # 合并逻辑
+│   │   └── libs/                # 从原项目复制的核心依赖代码
+│   │       ├── __init__.py
+│   │       ├── mask_layer.py        # ← Tran_SeaM/mask_layer.py
+│   │       ├── sparse_utils.py      # ← Tran_SeaM/utils.py (摘取 load_init_module_sparse)
+│   │       ├── clone_model.py       # ← task_eval/code_clone_eval.py (Model + evaluate)
+│   │       ├── search_model.py      # ← task_eval/nl_code_search_eval.py (Model + evaluate)
+│   │       ├── merging_methods.py   # ← merge_methods/merging_methods.py (MergingMethod)
+│   │       ├── task_vector.py       # ← merge_methods/task_vector.py (TaskVector)
+│   │       ├── mask_weights_utils.py # ← merge_methods/mask_weights_utils.py
+│   │       └── merge_utils.py       # ← merge_utils/merge_utils.py (公共工具)
 │   └── chapter4/                # 第四章适配
 │       ├── __init__.py
-│       └── adapter.py           # 适配 TransModular_GPT/router 代码
-├── data/                        # 预置数据与模型
-│   ├── pretrained_models/       # 预训练模型
-│   ├── finetuned_models/        # 微调后模型
-│   ├── task_vectors/            # 预计算的任务向量
-│   └── sample_datasets/         # 示例数据集 (含预置混合CSV)
+│       ├── adapter.py           # 适配层封装
+│       └── libs/                # 从 TransModular_GPT/router 复制的核心代码
+│           ├── __init__.py
+│           ├── config.py            # ← router/config.py (路径已改为本地)
+│           ├── router.py            # ← router/router.py (Router 网络)
+│           ├── merge.py             # ← router/merge.py (动态合并)
+│           ├── task_vectors.py      # ← router/task_vectors.py (任务向量加载)
+│           └── data.py              # ← router/data.py (数据预处理)
+├── data/                        # 所有模型和数据集 (自包含)
+│   ├── models/                  # 模型文件 (每个模型一个子目录)
+│   │   ├── codebert-base/           # CodeBERT 预训练基座
+│   │   ├── module_java/             # Java 模块化 mask (result/ 子目录)
+│   │   ├── module_python/           # Python 模块化 mask (result/ 子目录)
+│   │   ├── finetuned_clone/         # 克隆检测微调模型 checkpoint
+│   │   ├── finetuned_search/        # 代码搜索微调模型 checkpoint
+│   │   ├── gpt-neo-125m/            # GPT-Neo 125M 预训练基座
+│   │   ├── task_vectors/            # 第四章预计算任务向量 (4个 .pt)
+│   │   ├── heads/                   # 第四章分类头 (4个 .pt)
+│   │   └── router_checkpoint/       # Router 训练好的 checkpoint
+│   └── datasets/                # 评测数据集
+│       ├── clone_detection/         # test.txt + data.jsonl
+│       ├── code_search/             # cosqa_dev.json
+│       └── sample_datasets/         # mixed_sample_50.csv (第四章示例)
 └── docker-compose.yml           # 容器化部署 (可选)
 ```
 
@@ -435,47 +462,245 @@ CREATE TABLE evaluations (
 
 ## 七、算法适配层设计
 
-### 7.1 第三章适配 (chapter3_adapter.py)
+### 7.1 第三章适配 (algorithm/chapter3/)
 
-封装 `Tran_SeaM/` 下的核心代码，提供统一接口：
+将 `Tran_SeaM/` 下的核心代码封装为 **5 个模块文件**，各司其职，互相独立调用：
 
-```python
-class Chapter3Adapter:
-    def modularize(self, language: str, lr: float, alpha: float, epochs: int) -> TaskHandle
-    def load_module(self, language: str, module_path: str) -> ModuleInfo
-    def finetune(self, task: str, module_path: str, params: dict) -> TaskHandle
-    def merge(self, model_paths: list, method: str, coefficients: list) -> MergeResult
-    def evaluate(self, model_path: str, task: str, dataset_path: str) -> EvalResult
+#### 7.1.0 文件职责总览
+
+```
+algorithm/chapter3/
+├── config.py          # 路径常量 + 设备配置
+├── model_loader.py    # 模型加载统一入口
+├── modularizer.py     # 模块化训练逻辑
+├── evaluator.py       # 评测逻辑（克隆检测 + 代码搜索）
+└── merger.py          # 模型合并逻辑（4 种方法）
 ```
 
-**关键适配点**:
-- `modularizer.py` → `modularize()`: 封装 Trainer 训练循环
-- `compress_model.py` → 合并时的模型压缩
-- `task_merge/merge_lm.py` → `merge()`: 封装多种合并方法
-- `task_merge/task_eval/` → `evaluate()`: 封装克隆检测/代码搜索评测
+#### 7.1.1 config.py — 路径配置
 
-**合并方法映射** (前端显示名 → 代码内部名):
+> 所有路径均指向 `demo_system/data/` 下的本地副本，**不依赖外部文件夹**。
 
-| 前端显示 | merge_lm.py 参数 | 说明 |
-|----------|------------------|---------|
-| Task Arithmetic | `task_arithmetic` | 标准任务算术 |
-| TIES | `ties_merging` | TIES 合并 |
-| DARE | `mask_merging` | 随机掩码合并 |
-| ModularEvo | — | 本文方法，需新增实现 |
+```python
+import os
 
-**预置模型路径** (快速演示模式):
+# demo_system/ 根目录
+DEMO_ROOT = os.path.join(os.path.dirname(__file__), "..", "..")
+DATA_ROOT = os.path.join(DEMO_ROOT, "data")
+MODEL_ROOT = os.path.join(DATA_ROOT, "models")
+DATASET_ROOT = os.path.join(DATA_ROOT, "datasets")
 
-| 资源 | 相对路径 |
-|--------|----------|
-| Java 模块 mask | `Tran_SeaM/data/module_java/lr_0.001_alpha_10.0_ne_4_wrr_22.94/` |
-| Python 模块 mask | `Tran_SeaM/data/module_python/lr_0.001_alpha_10.0_ne_4_wrr_24.15/` |
-| 克隆检测微调模型 | `Tran_SeaM/Clone_detection_BigCloneBench_2/code/saved_models/module_fintune_wrr_22.94_20250228/checkpoint-best-f1/` |
-| 代码搜索微调模型 | `Tran_SeaM/NL_code_search_WebQuery/code/save_model/model_cosqa_20241031_epoch10/checkpoint-best-aver/` |
-| CodeBERT 预训练模型 | `Tran_SeaM/data/pretrain_model/codebert-base/` |
+# ── 预训练基座 ──
+CODEBERT_PATH = os.path.join(MODEL_ROOT, "codebert-base")
 
-### 7.2 第四章适配 (chapter4_adapter.py)
+# ── 模块化 mask 路径 ──
+MODULE_PATHS = {
+    "java":   os.path.join(MODEL_ROOT, "module_java"),
+    "python": os.path.join(MODEL_ROOT, "module_python"),
+}
 
-封装 `TransModular_GPT/router/` 下的核心代码：
+# ── 微调模型 checkpoint 路径 ──
+FINETUNED_PATHS = {
+    "clone_detection": os.path.join(MODEL_ROOT, "finetuned_clone", "pytorch_model.bin"),
+    "code_search":     os.path.join(MODEL_ROOT, "finetuned_search", "pytorch_model.bin"),
+}
+
+# ── 评测数据路径 ──
+EVAL_DATA_PATHS = {
+    "clone_detection": os.path.join(DATASET_ROOT, "clone_detection", "test.txt"),
+    "code_search":     os.path.join(DATASET_ROOT, "code_search", "cosqa_dev.json"),
+}
+
+# ── 克隆检测数据附属文件 ──
+CLONE_DATA_JSONL = os.path.join(DATASET_ROOT, "clone_detection", "data.jsonl")
+
+# ── 合并方法名映射 (前端显示名 → MergingMethod 内部名) ──
+MERGE_METHODS = {
+    "task_arithmetic": "task_arithmetic",
+    "ties":           "ties_merging",
+    "dare":           "mask_merging",
+    # "modular_evo":  需要新增实现
+}
+```
+
+#### 7.1.2 model_loader.py — 模型加载
+
+统一封装 CodeBERT 基座、Mask 模块、微调模型的加载逻辑，供其他模块调用。
+
+```python
+"""模型加载统一入口"""
+# 依赖 (均已复制到 libs/ 目录下):
+#   libs/sparse_utils.py → load_init_module_sparse()
+#   libs/clone_model.py  → CloneModel + RobertaClassificationHead
+#   libs/search_model.py → SearchModel + MLP head
+
+def load_base_model(device="cuda") -> tuple[RobertaModel, RobertaConfig, RobertaTokenizer]:
+    """加载 CodeBERT 基座模型"""
+
+def load_sparse_module(language: str, base_model, device="cuda") -> dict:
+    """加载预训练 mask 并应用到基座模型，返回 ModuleInfo
+    调用: libs/sparse_utils.py → load_init_module_sparse()
+    返回: {model, sparsity, wrr, layer_stats: [{name, total, nonzero, ratio}]}
+    """
+
+def load_finetuned_model(task: str, base_model, config, tokenizer, device="cuda") -> nn.Module:
+    """加载指定任务的微调模型
+    task: 'clone_detection' | 'code_search'
+    根据 task 选择 CloneModel 或 SearchModel 架构，加载 checkpoint
+    """
+
+def get_module_info(language: str) -> dict:
+    """获取模块元信息（不加载到 GPU），返回 {path, wrr, exists}"""
+```
+
+**关键实现细节**:
+- `load_sparse_module()` 内部调用 `libs/sparse_utils.load_init_module_sparse(model, module_path, prefix='roberta.')`，遍历 state_dict 中的 `*_mask` 键，二值化后与权重相乘
+- 逐层收集 `(total_params, nonzero_params, ratio)` 统计信息，用于前端热力图展示
+- 克隆检测模型使用 `RobertaClassificationHead`（hidden_size×2 → 2），代码搜索模型使用 MLP Siamese 架构（768×4 → 768 → 1）
+
+#### 7.1.3 modularizer.py — 模块化训练（预留）
+
+```python
+"""模块化训练逻辑 — P0 阶段为快速演示模式（仅加载），预留训练接口"""
+# 参考原代码: Tran_SeaM/modularizer.py (Modularizer extends Trainer)
+#       已复制到: libs/mask_layer.py (MaskLinear, init_mask_model, Binarization)
+
+def modularize(language: str, lr=0.001, alpha=10.0, epochs=4) -> dict:
+    """完整模块化训练（预留接口，当前直接抛 NotImplementedError）
+    训练逻辑: 
+      1. init_mask_model() 将 Linear → MaskLinear，冻结权重只训练 mask
+      2. Modularizer(Trainer) 使用 loss = MLM_loss + alpha * WRR_loss 训练
+      3. Binarization: mask > 0 → 1, 否则 → 0 (straight-through estimator)
+      4. 输出: pytorch_model.bin (含 weight_mask / bias_mask)
+    """
+    raise NotImplementedError("模块化训练暂不支持，请使用 load_sparse_module() 加载预训练 mask")
+```
+
+#### 7.1.4 evaluator.py — 评测逻辑
+
+```python
+"""评测逻辑封装"""
+# 依赖 (均已复制到 libs/ 目录下):
+#   libs/clone_model.py  → evaluate() (克隆检测评测)
+#   libs/search_model.py → evaluate() (代码搜索评测)
+
+def evaluate_clone_detection(model, tokenizer, test_data_file=None) -> dict:
+    """评测克隆检测任务
+    内部调用: code_clone_eval.evaluate(model, tokenizer, test_data_file, output_dir)
+    数据格式: test.txt (TSV: url1 \t url2 \t label) + data.jsonl ({idx, func})
+    返回: {eval_f1, eval_precision, eval_recall, eval_threshold}
+    """
+
+def evaluate_code_search(model, tokenizer, eval_data_file=None) -> dict:
+    """评测代码搜索任务
+    内部调用: nl_code_search_eval.evaluate(model, tokenizer, eval_data_file, output_dir)
+    数据格式: cosqa_dev.json ([{idx, query, doc, code, label}])
+    返回: {acc, precision, recall, f1, acc_and_f1}
+    """
+
+def evaluate_model(model, task: str, tokenizer) -> dict:
+    """统一评测入口，根据 task 分发到对应评测函数"""
+```
+
+**关键实现细节**:
+- 克隆检测评测使用 `multiprocessing.Pool(16)` 并行加载数据，batch_size=4
+- 克隆检测通过搜索 threshold (1/100 ~ 99/100) 找最优 F1 对应的阈值
+- 代码搜索评测 batch_size=8，使用 BCELoss + 0.5 阈值二分类
+- 两个评测函数签名一致: `evaluate(model, tokenizer, data_file, output_dir) → dict`
+
+#### 7.1.5 merger.py — 模型合并
+
+```python
+"""模型合并逻辑封装"""
+# 依赖 (均已复制到 libs/ 目录下):
+#   libs/merging_methods.py → MergingMethod 类
+#   libs/task_vector.py     → TaskVector 类
+
+def merge_models(
+    method: str,                     # 'task_arithmetic' | 'ties' | 'dare'
+    finetuned_models: list,          # [clone_model, search_model]
+    base_model: nn.Module,           # CodeBERT 基座
+    scaling_coefficients: list = None, # [0.5, 0.5] 缩放系数
+    # DARE/mask_merging 专用参数
+    weight_mask_rate: float = 0.1,
+    mask_strategy: str = "random",
+    mask_apply_method: str = "task_arithmetic",
+    # TIES 专用参数
+    param_value_mask_rate: float = 0.8,
+) -> dict:
+    """执行模型合并
+    
+    内部流程:
+      1. 创建 MergingMethod(merging_method_name=MERGE_METHODS[method])
+      2. 调用 merging_method.get_merged_model(
+           merged_model, models_to_merge,
+           exclude_param_names_regex=[".*classifier.*", ".*mlp.*"],
+           ...)
+      3. 返回 merged_params (Dict[str, Tensor])
+    
+    排除规则: 合并仅针对共享的 encoder 参数
+              任务特定头 (classifier / mlp) 保持各自微调后的权重
+    """
+
+def merge_and_evaluate(
+    method: str,
+    scaling_coefficients: list = None,
+    device: str = "cuda",
+    **merge_kwargs,
+) -> dict:
+    """合并 + 评测一体化调用
+    
+    流程:
+      1. load_base_model()
+      2. load_finetuned_model('clone_detection', ...) + load_finetuned_model('code_search', ...)
+      3. merge_models(method, [model1, model2], base, ...)
+      4. 将 merged_params 分别加载到两个任务模型中
+      5. evaluate_clone_detection() + evaluate_code_search()
+    
+    返回: {
+        'method': str,
+        'clone_detection': {eval_f1, eval_precision, eval_recall},
+        'code_search': {acc, precision, recall, f1},
+        'scaling_coefficients': list,
+    }
+    """
+
+def get_available_methods() -> list[dict]:
+    """返回所有可用合并方法及其默认参数，供前端展示"""
+```
+
+**关键实现细节**:
+- `MergingMethod` 类通过 `merging_method_name` 选择算法，所有方法共享 `get_merged_model()` 入口
+- `exclude_param_names_regex=[".*classifier.*", ".*mlp.*"]` 排除任务特定头
+- Task Arithmetic: `merged = base + Σ(α_i × (ft_i - base))`
+- TIES: 先按幅度掩码 (mask_rate=0.8)，再按符号一致性投票，最后平均
+- DARE (mask_merging): 随机/幅度掩码后再交给其他方法合并，支持 rescale
+- 合并后需分别加载到克隆检测模型和代码搜索模型中评测（因任务头不同）
+
+**合并方法映射** (前端显示名 → MergingMethod 内部名):
+
+| 前端显示 | MergingMethod 参数 | 关键超参 | 说明 |
+|----------|-------------------|----------|------|
+| Task Arithmetic | `task_arithmetic` | `scaling_coefficients` | merged = base + Σ(α_i × τ_i) |
+| TIES | `ties_merging` | `param_value_mask_rate` | 幅度掩码 + 符号投票 |
+| DARE | `mask_merging` | `weight_mask_rate`, `mask_strategy`, `mask_apply_method` | 掩码 + 嵌套合并 |
+| ModularEvo | — | — | 本文方法，需新增实现 |
+
+**预置资源路径** (均位于 `demo_system/data/` 下的本地副本):
+
+| 资源 | demo_system 内路径 | 原始来源 |
+|--------|----------|----------|
+| CodeBERT 预训练基座 | `data/models/codebert-base/` | `Tran_SeaM/data/pretrain_model/codebert-base/` |
+| Java 模块 mask | `data/models/module_java/` | `Tran_SeaM/data/module_java/lr_0.001_alpha_10.0_ne_4_wrr_22.94/result/` |
+| Python 模块 mask | `data/models/module_python/` | `Tran_SeaM/data/module_python/lr_0.001_alpha_10.0_ne_4_wrr_24.15/result/` |
+| 克隆检测微调模型 | `data/models/finetuned_clone/` | `Tran_SeaM/Clone_detection_BigCloneBench_2/code/saved_models/.../checkpoint-best-f1/` |
+| 代码搜索微调模型 | `data/models/finetuned_search/` | `Tran_SeaM/NL_code_search_WebQuery/code/save_model/.../checkpoint-best-aver/` |
+| 克隆检测测试数据 | `data/datasets/clone_detection/` | `Tran_SeaM/Clone_detection_BigCloneBench_2/dataset/{test.txt, data.jsonl}` |
+| 代码搜索验证数据 | `data/datasets/code_search/` | `Tran_SeaM/NL_code_search_WebQuery/CoSQA/cosqa_dev.json` |
+
+### 7.2 第四章适配 (algorithm/chapter4/)
+
+从 `TransModular_GPT/router/` 复制核心代码到 `algorithm/chapter4/libs/`，模型和数据存放在 `data/models/` 下。
 
 ```python
 class Chapter4Adapter:
@@ -485,22 +710,25 @@ class Chapter4Adapter:
     def merge_and_evaluate(self, dataset, alphas) -> EvalResult  # 合并+评测
 ```
 
-**关键适配点**:
-- `router/config.py` → 配置路径
-- `router/task_vectors.py` → 加载预计算任务向量
-- `router/router.py` → Router 推理 (Hybrid 变体)
-- `router/merge.py` → 动态合并 `merged = base + Σ(α_i × τ_i)`
-- `router/evaluate.py` → 评测流程
-- `router/data.py` → 用户上传数据的预处理
+**代码依赖** (已复制到 `algorithm/chapter4/libs/` 下):
 
-**预置模型路径**:
+| 本地文件 | 原始来源 | 功能 |
+|----------|----------|------|
+| `libs/config.py` | `router/config.py` | 路径配置 (已改为本地路径) |
+| `libs/router.py` | `router/router.py` | Router 网络定义 + 推理 |
+| `libs/merge.py` | `router/merge.py` | 动态合并 `merged = base + Σ(α_i × τ_i)` |
+| `libs/task_vectors.py` | `router/task_vectors.py` | 加载预计算任务向量 |
+| `libs/data.py` | `router/data.py` | 用户上传数据的预处理 |
 
-| 资源 | 相对路径 |
-|--------|----------|
-| GPT-Neo 125M 基座 | `TransModular_GPT/fintune/save_model_with_mask_0.25/gpt-neo-125m/` |
-| 任务向量 (4个 .pt) | `TransModular_GPT/router/data/task_vectors/` |
-| 分类头 (4个 .pt) | `TransModular_GPT/router/data/heads/` |
-| Router checkpoint | `TransModular_GPT/router/checkpoints/20260303_172150_bs32_lr0.001_ep5_bpe1000_lam0.5_dir0.3_alp1.0_cosLR/` |
+**预置模型路径** (均位于 `demo_system/data/` 下的本地副本):
+
+| 资源 | demo_system 内路径 | 原始来源 |
+|--------|----------|----------|
+| GPT-Neo 125M 基座 | `data/models/gpt-neo-125m/` | `TransModular_GPT/data/gpt-neo-125m/` |
+| 任务向量 (4个 .pt) | `data/models/task_vectors/` | `TransModular_GPT/router/data/task_vectors/` |
+| 分类头 (4个 .pt) | `data/models/heads/` | `TransModular_GPT/router/data/heads/` |
+| Router checkpoint | `data/models/router_checkpoint/` | `TransModular_GPT/router/checkpoints/20260303_...cosLR/` |
+| 元数据 | `data/models/router_meta.pt` | `TransModular_GPT/router/data/meta.pt` |
 
 **基线准确率** (来源: `evaluate.py` 硬编码):
 
@@ -529,19 +757,76 @@ def convert_upload_to_task_format(records: list[dict]) -> dict[int, list[dict]]:
     ...
 ```
 
-### 7.4 路径配置策略
+### 7.4 路径配置策略 — 自包含设计
 
-现有代码使用服务器绝对路径，需统一为环境变量 + 相对路径：
+**核心原则**: `demo_system/` 是完全自包含的可运行单元，所有模型、数据集、依赖代码均存放在其内部，**不引用任何外部文件夹** (`Tran_SeaM/`、`TransModular_GPT/` 等)。
 
 ```python
-# 环境变量
+# config.py 统一使用 demo_system/ 内部的相对路径
 import os
-PROJECT_ROOT = os.environ.get("DEMO_PROJECT_ROOT", os.path.dirname(os.path.abspath(__file__)))
-ALGO_ROOT = os.environ.get("DEMO_ALGO_ROOT", os.path.join(PROJECT_ROOT, ".."))  # 指向算法代码根目录
+DEMO_ROOT = os.path.join(os.path.dirname(__file__), "..", "..")  # → demo_system/
+DATA_ROOT = os.path.join(DEMO_ROOT, "data")         # → demo_system/data/
+MODEL_ROOT = os.path.join(DATA_ROOT, "models")      # → demo_system/data/models/
+DATASET_ROOT = os.path.join(DATA_ROOT, "datasets")   # → demo_system/data/datasets/
 ```
 
-- 开发时: 相对路径自动解析
-- Docker 部署时: 通过 `DEMO_PROJECT_ROOT` / `DEMO_ALGO_ROOT` 环境变量指定容器内路径
+**资源准备方式**: 首次部署时运行 `setup_resources.sh` 脚本，从原始项目目录复制所需文件到 `demo_system/data/` 下（参见 7.5 节资源复制清单）。复制完成后 `demo_system/` 即可独立运行。
+
+- 开发时: 运行一次 `setup_resources.sh` 后即可独立使用
+- 部署迁移时: 打包整个 `demo_system/` 目录即可
+- Docker 部署时: Dockerfile 中 `COPY demo_system/ /app/` 即为完整系统
+
+### 7.5 资源复制清单 (setup_resources.sh)
+
+> 首次部署时运行此脚本，从原始项目目录复制所需的模型、数据集和代码文件。
+
+#### 7.5.1 模型文件复制
+
+| 目标路径 (`demo_system/` 内) | 来源路径 | 关键文件 | 预估大小 |
+|-----|------|------|------|
+| `data/models/codebert-base/` | `Tran_SeaM/data/pretrain_model/codebert-base/` | config.json, pytorch_model.bin, tokenizer.json, vocab.json, merges.txt | ~500MB |
+| `data/models/module_java/` | `Tran_SeaM/data/module_java/lr_0.001_alpha_10.0_ne_4_wrr_22.94/result/` | pytorch_model.bin, config.json | ~500MB |
+| `data/models/module_python/` | `Tran_SeaM/data/module_python/lr_0.001_alpha_10.0_ne_4_wrr_24.15/result/` | pytorch_model.bin, config.json | ~500MB |
+| `data/models/finetuned_clone/` | `Tran_SeaM/Clone_detection_BigCloneBench_2/code/saved_models/module_fintune_wrr_22.94_20250228/checkpoint-best-f1/` | pytorch_model.bin | ~500MB |
+| `data/models/finetuned_search/` | `Tran_SeaM/NL_code_search_WebQuery/code/save_model/model_cosqa_20241031_epoch10/checkpoint-best-aver/` | pytorch_model.bin | ~500MB |
+| `data/models/gpt-neo-125m/` | `TransModular_GPT/data/gpt-neo-125m/` | config.json, pytorch_model.bin, tokenizer files | ~500MB |
+| `data/models/task_vectors/` | `TransModular_GPT/router/data/task_vectors/` | code.pt, langid.pt, law.pt, math.pt | ~2GB |
+| `data/models/heads/` | `TransModular_GPT/router/data/heads/` | code.pt, langid.pt, law.pt, math.pt | ~1MB |
+| `data/models/router_checkpoint/` | `TransModular_GPT/router/checkpoints/20260303_172150_.../` | checkpoint 文件 | ~1MB |
+| `data/models/router_meta.pt` | `TransModular_GPT/router/data/meta.pt` | meta.pt | <1MB |
+
+#### 7.5.2 数据集复制
+
+| 目标路径 | 来源路径 | 关键文件 |
+|------|------|------|
+| `data/datasets/clone_detection/` | `Tran_SeaM/Clone_detection_BigCloneBench_2/dataset/` | test.txt, data.jsonl |
+| `data/datasets/code_search/` | `Tran_SeaM/NL_code_search_WebQuery/CoSQA/` | cosqa_dev.json |
+| `data/datasets/sample_datasets/` | 已存在 | mixed_sample_50.csv |
+
+#### 7.5.3 代码文件复制
+
+**第三章 libs/** (复制到 `algorithm/chapter3/libs/`):
+
+| 目标文件 | 来源文件 | 是否需要修改 import | 说明 |
+|------|------|------|------|
+| `mask_layer.py` | `Tran_SeaM/mask_layer.py` | ❌ 无本地依赖 | MaskLinear, Binarization, init_mask_model |
+| `sparse_utils.py` | `Tran_SeaM/utils.py` | ✅ `from mask_layer` → `from .mask_layer` | load_init_module_sparse() |
+| `clone_model.py` | `Tran_SeaM/task_merge/task_eval/code_clone_eval.py` | ❌ 无本地依赖 | Model (CloneModel) + evaluate() |
+| `search_model.py` | `Tran_SeaM/task_merge/task_eval/nl_code_search_eval.py` | ❌ 无本地依赖 | Model (SearchModel) + evaluate() |
+| `merge_utils.py` | `Tran_SeaM/task_merge/merge_utils/merge_utils.py` | ❌ 无本地依赖 | get_param_names_to_merge() 等公共工具 |
+| `task_vector.py` | `Tran_SeaM/task_merge/merge_methods/task_vector.py` | ✅ `from merge_utils.merge_utils` → `from .merge_utils` | TaskVector 类 |
+| `mask_weights_utils.py` | `Tran_SeaM/task_merge/merge_methods/mask_weights_utils.py` | ✅ 修改本地 import 为相对导入 | mask_model_weights() |
+| `merging_methods.py` | `Tran_SeaM/task_merge/merge_methods/merging_methods.py` | ✅ 修改本地 import 为相对导入 | MergingMethod 类 |
+
+**第四章 libs/** (复制到 `algorithm/chapter4/libs/`):
+
+| 目标文件 | 来源文件 | 是否需要修改 import | 说明 |
+|------|------|------|------|
+| `config.py` | `TransModular_GPT/router/config.py` | ✅ 路径改为指向 `data/models/` | 路径常量 |
+| `router.py` | `TransModular_GPT/router/router.py` | ✅ `from config` → `from .config` | Router 网络 |
+| `merge.py` | `TransModular_GPT/router/merge.py` | ✅ `from config` → `from .config` | 动态合并 |
+| `task_vectors.py` | `TransModular_GPT/router/task_vectors.py` | ✅ `from config` → `from .config` | 任务向量加载 |
+| `data.py` | `TransModular_GPT/router/data.py` | ✅ `from config` → `from .config` | 数据预处理 |
 
 ---
 
@@ -656,27 +941,33 @@ npm run dev -- --port 3000
 
 | 步骤 | 文件 | 内容 | 验证方式 |
 |------|------|------|----------|
-| P1.1 | `config.py` | 路径配置：CODEBERT_PATH / MODULE_PATHS / FINETUNED_PATHS / EVAL_DATA_PATHS / MERGE_METHODS 常量 | `python -c "from algorithm.chapter3.config import *; print(CODEBERT_PATH)"` 输出有效路径 |
-| P1.2 | `model_loader.py` | `load_base_model()` — 加载 CodeBERT 基座 + tokenizer + config | `python -c "from algorithm.chapter3.model_loader import load_base_model; m,c,t = load_base_model('cpu'); print(c.hidden_size)"` 输出 768 |
-| P1.3 | `model_loader.py` | `load_sparse_module(lang)` — 加载预训练 mask，返回稀疏率 + 逐层统计 | `python -c "...load_sparse_module('java', model)..."` 输出 wrr ≈ 22.94% 和逐层稀疏率列表 |
-| P1.4 | `model_loader.py` | `load_finetuned_model(task)` — 加载微调后的克隆检测/代码搜索模型 | 加载完成不报错，`model.eval()` 正常 |
-| P1.5 | `evaluator.py` | `evaluate_clone_detection()` — 封装克隆检测评测 | 调用返回 `{eval_f1, eval_precision, eval_recall}` |
-| P1.6 | `evaluator.py` | `evaluate_code_search()` — 封装代码搜索评测 | 调用返回 `{acc, precision, recall, f1}` |
-| P1.7 | `merger.py` | `merge_models(method, models, base, ...)` — 封装 3 种合并方法 | 对 task_arithmetic 调用返回 merged_params dict |
-| P1.8 | `merger.py` | `merge_and_evaluate(method)` — 合并 + 双任务评测一体化 | 返回 `{method, clone_detection: {...}, code_search: {...}}` |
-| P1.9 | 集成验证 | 3 种合并方法全量跑通 | 运行测试脚本，输出 3 种方法在两个任务上的性能对比表 |
+| P1.1 | `config.py` | 路径配置：CODEBERT_PATH / MODULE_PATHS / FINETUNED_PATHS / EVAL_DATA_PATHS / MERGE_METHODS 常量 | ✅ 所有路径 exists=True |
+| P1.2 | `model_loader.py` | `load_base_model()` — 加载 CodeBERT 基座 + tokenizer + config | ✅ RobertaModel 124.6M params |
+| P1.3 | `model_loader.py` | `load_sparse_module(lang)` — 加载预训练 mask，返回稀疏率 + 逐层统计 | ✅ Java: sparsity=77.06%, WRR=22.94%, 144 layers |
+| P1.4 | `model_loader.py` | `load_finetuned_model(task)` — 加载微调后的克隆检测/代码搜索模型 | ✅ Clone=125.8M, Search=127.0M |
+| P1.5 | `evaluator.py` | `evaluate_clone()` — 封装克隆检测评测 | ✅ 返回 {eval_f1, eval_precision, eval_recall} |
+| P1.6 | `evaluator.py` | `evaluate_search()` — 封装代码搜索评测 | ✅ 返回 {acc, precision, recall, f1} |
+| P1.7 | `merger.py` | `merge_models(method, ...)` — 封装 3 种合并方法 | ✅ task_arithmetic 返回 199 keys |
+| P1.8 | `merger.py` | `merge_and_evaluate(method)` — 合并 + 双任务评测一体化 | ✅ 流程验证通过 |
+| P1.9 | 集成验证 | 导入、配置、GPU 加载、合并流程全部验证 | ✅ All tests PASSED |
 
 ### P2: 第三章后端 API & 前端页面 A
 
-| 步骤 | 内容 | 验证方式 |
-|------|------|----------|
-| P2.1 | 后端 API: `/api/ch3/modules` 返回可用模块列表 | `curl /api/ch3/modules` 返回 Java/Python 模块信息 JSON |
-| P2.2 | 后端 API: `/api/ch3/load-module` 加载指定模块 | `curl -X POST /api/ch3/load-module` 返回模块稀疏率、参数量 |
-| P2.3 | 后端 API: `/api/ch3/merge` 执行合并 + 评测 | `curl -X POST /api/ch3/merge` 指定方法后返回各任务准确率 |
-| P2.4 | 后端 API: `/api/ch3/graph` 返回知识图谱数据 | `curl /api/ch3/graph` 返回 nodes + edges JSON |
-| P2.5 | 前端页面 A — Step 1 区域: 模块选择与加载，展示稀疏率/热力图 | 页面点击"加载 Java 模块"→ 显示模块稀疏率统计图 |
-| P2.6 | 前端页面 A — Step 2 区域: 展示预微调模型的评测结果 | 页面显示克隆检测 F1 和代码搜索 Precision |
-| P2.7 | 前端页面 A — Step 3 区域: 合并方法选择 + 结果对比图表 | 选择合并方法 → 点击合并 → 显示准确率对比柱状图 |
+| 步骤 | 内容 | 验证方式 | 状态 |
+|------|------|----------|------|
+| P2.1 | 后端 API: `/api/ch3/modules` 返回可用模块列表 | `curl /api/ch3/modules` 返回 Java/Python 模块信息 JSON | ✅ |
+| P2.2 | 后端 API: `/api/ch3/load-module` 加载指定模块 + `/api/ch3/finetuned` 微调模型信息 + `/api/ch3/evaluate/{task}` 评测 | `curl -X POST /api/ch3/load-module` 返回模块稀疏率 77.06%、WRR 22.94%、144 层逐层统计 | ✅ |
+| P2.3 | 后端 API: `/api/ch3/merge` 执行合并 + 评测 | `curl -X POST /api/ch3/merge` 支持 task_arithmetic/ties/dare 三种方法 | ✅ |
+| P2.4 | 后端 API: `/api/ch3/graph` 返回知识图谱数据 | `curl /api/ch3/graph` 返回 6 节点 + 6 条边 JSON | ✅ |
+| P2.5 | 前端页面 A — Step 1 区域: 模块选择与加载，ECharts 柱状图展示逐层权重保留率 | 页面点击"加载 Java 模块"→ 显示逐层 bar chart + 稀疏率/WRR 标签 | ✅ |
+| P2.6 | 前端页面 A — Step 2 区域: 展示预微调模型的评测结果 | 页面显示克隆检测 F1 和代码搜索 Precision | ✅ |
+| P2.7 | 前端页面 A — Step 3 区域: 合并方法选择 + 结果对比图表 | 选择合并方法 → 配置系数 → 点击合并 → 显示准确率对比柱状图 | ✅ |
+
+> **P2 实现文件清单:**
+> - `backend/api/ch3_schemas.py` — Pydantic 请求/响应模型
+> - `backend/api/chapter3.py` — 6 个 API 端点 (modules/load-module/finetuned/evaluate/merge/graph)
+> - `frontend/src/api/chapter3.js` — Axios API 封装层
+> - `frontend/src/views/Chapter3View.vue` — 完整页面 (知识图谱 + 三步流程)
 
 ### P3: 第四章算法适配层
 

@@ -1,0 +1,18 @@
+{
+  "batch_size": "32",
+  "num_epochs": "5",
+  "batches_per_epoch": "1000",
+  "learning_rate": "0.001",
+  "weight_decay": "0.0001",
+  "lambda_task_cls": "0.5",
+  "dirichlet_alpha": "0.3",
+  "lambda_alpha": "1.0",
+  "use_cosine_lr": "True",
+  "max_samples_per_task": "None",
+  "val_every": "200",
+  "val_batches": "50",
+  "val_samples_per_task": "500",
+  "save_dir": "/home/longwr/new_SeaM/old_ModularEvo/TransModular_GPT/router/checkpoints/20260303_172150_bs32_lr0.001_ep5_bpe1000_lam0.5_dir0.3_alp1.0_cosLR",
+  "seed": "42",
+  "grad_clip_norm": "1.0"
+}

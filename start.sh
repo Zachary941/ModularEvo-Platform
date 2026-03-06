@@ -7,6 +7,21 @@ export PATH="/home/longwr/.local/bin:$PATH"
 export DEMO_PROJECT_ROOT="$SCRIPT_DIR"
 export DEMO_ALGO_ROOT="$(dirname "$SCRIPT_DIR")"
 
+# 查找可用的 node 二进制
+NODE_BIN=""
+if command -v node >/dev/null 2>&1; then
+    NODE_BIN="$(command -v node)"
+else
+    # 使用 VS Code Server 自带的 node
+    NODE_BIN="$(find /home/longwr/.vscode-server/cli/servers -name 'node' -type f 2>/dev/null | head -1)"
+fi
+if [ -z "$NODE_BIN" ]; then
+    echo "[ERROR] 未找到 node 二进制，请安装 Node.js"
+    exit 1
+fi
+NODE_DIR="$(dirname "$NODE_BIN")"
+export PATH="$NODE_DIR:$PATH"
+
 BACKEND_PID_FILE="$SCRIPT_DIR/.backend.pid"
 FRONTEND_PID_FILE="$SCRIPT_DIR/.frontend.pid"
 
@@ -44,7 +59,8 @@ done
 # 启动前端
 echo "[2/2] 启动前端 (Vite on :3000) ..."
 cd "$SCRIPT_DIR/frontend"
-nohup npx vite --port 3000 --host 0.0.0.0 > "$SCRIPT_DIR/.frontend.log" 2>&1 &
+VITE_BIN="$SCRIPT_DIR/frontend/node_modules/.bin/vite"
+nohup "$NODE_BIN" "$VITE_BIN" --port 3000 --host 0.0.0.0 > "$SCRIPT_DIR/.frontend.log" 2>&1 &
 echo $! > "$FRONTEND_PID_FILE"
 echo "      PID: $(cat "$FRONTEND_PID_FILE")"
 sleep 2
