@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+
+# Node
+frontend/node_modules/
+
+# IDE
+.vscode/
+.idea/
+
+# 运行时生成
+*.pid
+*.log
+.backend.pid
+.backend.log
+.frontend.pid
+.frontend.log
+
+# 数据库
+*.db
