@@ -69,6 +69,26 @@ function getModelStyle(type) {
   return MODEL_TYPE_STYLES[type] || MODEL_TYPE_STYLES.pretrained
 }
 
+// meta 字段中文标签映射
+const META_LABELS = {
+  params: '参数量', arch: '架构', vocab: '词表', hidden: '隐藏层',
+  pretrain_data: '预训练数据', pretrain_task: '预训练任务', source: '来源',
+  task: '下游任务', classes: '类别数', acc: '基线 ACC', dataset: '评测数据集',
+  train_epochs: '训练轮数', lr: '学习率', batch_size: 'Batch Size',
+  layers: '层数', formula: '计算公式', size: '存储大小', source_model: '源模型',
+  variant: '网络变体', output: '输出维度',
+  source_models: '源模型', routing: '路由方式',
+}
+function getMetaFields(model) {
+  if (!model) return []
+  const exclude = ['desc']
+  const fields = model.meta || {}
+  return Object.entries(fields)
+    .filter(([k]) => !exclude.includes(k))
+    .filter(([, v]) => v !== null && v !== undefined && v !== '')
+    .map(([k, v]) => ({ key: k, label: META_LABELS[k] || k, value: String(v) }))
+}
+
 /* ======== 卡片 4: AutoRouter 评测 ======== */
 const uploadedFile = ref(null)
 const uploadResult = ref(null)
@@ -275,15 +295,21 @@ onMounted(async () => {
     const [modelRes, graphRes, blRes] = await Promise.all([
       getModels(), getGraph(), getBaseline(),
     ])
-    allModels.value = modelRes.data.map(m => ({
-      ...m,
-      meta: {
-        params: m.params,
-        desc: m.description,
-        ...(m.baseline_acc ? { acc: `${(m.baseline_acc*100).toFixed(1)}%` } : {}),
-        ...(m.num_classes ? { classes: m.num_classes } : {}),
-      },
-    }))
+    allModels.value = modelRes.data.map(m => {
+      // 从 graph 节点获取丰富的 meta 信息
+      const graphNode = graphRes.data.nodes.find(n => n.id === m.id || n.id === m.id.replace('gpt-neo-125m', 'gpt-neo'))
+      const graphMeta = graphNode?.meta || {}
+      return {
+        ...m,
+        meta: {
+          ...graphMeta,
+          // 如果 graph 没有某些字段，用 ModelInfo 的补充
+          ...(m.params && !graphMeta.params ? { params: m.params } : {}),
+          ...(m.baseline_acc && !graphMeta.acc ? { acc: `${(m.baseline_acc*100).toFixed(1)}%` } : {}),
+          ...(m.num_classes && !graphMeta.classes ? { classes: m.num_classes } : {}),
+        },
+      }
+    })
     if (allModels.value.length) selectedModelId.value = allModels.value[0].id
 
     graphNodes.value = graphRes.data.nodes
@@ -392,20 +418,12 @@ onMounted(async () => {
               </div>
             </div>
             <div class="model-card-body">
-              <div class="model-card-field" v-if="selectedModel.params">
-                <span class="field-label">参数量</span>
-                <span class="field-value">{{ selectedModel.params }}</span>
+              <div class="model-card-field" v-for="f in getMetaFields(selectedModel)" :key="f.key">
+                <span class="field-label">{{ f.label }}</span>
+                <span class="field-value">{{ f.value }}</span>
               </div>
-              <div class="model-card-field" v-if="selectedModel.baseline_acc">
-                <span class="field-label">基线ACC</span>
-                <span class="field-value">{{ (selectedModel.baseline_acc * 100).toFixed(1) }}%</span>
-              </div>
-              <div class="model-card-field" v-if="selectedModel.num_classes">
-                <span class="field-label">类别数</span>
-                <span class="field-value">{{ selectedModel.num_classes }}</span>
-              </div>
-              <div class="model-card-desc" v-if="selectedModel.description">
-                {{ selectedModel.description }}
+              <div class="model-card-desc" v-if="selectedModel.description || selectedModel.meta?.desc">
+                {{ selectedModel.description || selectedModel.meta?.desc }}
               </div>
             </div>
           </div>
@@ -640,30 +658,29 @@ onMounted(async () => {
   margin: 0;
 }
 .model-card-body {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px 24px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px 16px;
 }
 .model-card-field {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  min-width: 100px;
 }
 .field-label {
   font-size: 11px;
   color: #6b7280;
   font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
 }
 .field-value {
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 600;
   color: #1f2937;
+  word-break: break-word;
 }
 .model-card-desc {
-  width: 100%;
+  grid-column: 1 / -1;
   font-size: 13px;
   color: #4b5563;
   line-height: 1.6;

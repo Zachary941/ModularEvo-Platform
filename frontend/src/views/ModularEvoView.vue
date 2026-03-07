@@ -63,6 +63,25 @@ function getModelStyle(type) {
   return MODEL_TYPE_STYLES[type] || MODEL_TYPE_STYLES.pretrained
 }
 
+// meta 字段中文标签映射
+const META_LABELS = {
+  params: '参数量', arch: '架构', vocab: '词表', hidden: '隐藏层',
+  pretrain_data: '预训练数据', pretrain_task: '预训练任务', source: '来源',
+  wrr: 'WRR', sparsity: '稀疏率', method: '稀疏方法',
+  train_data: '训练数据', train_epochs: '训练轮数', lr: '学习率',
+  task: '下游任务', dataset: '评测数据集', eval_metric: '评测指标',
+  base_module: '基础模块', batch_size: 'Batch Size',
+  merge_methods: '合并方法', source_models: '源模型', formula: '合并公式',
+}
+function getMetaFields(model) {
+  if (!model) return []
+  const exclude = ['desc']
+  return Object.entries(model)
+    .filter(([k]) => !exclude.includes(k) && k !== 'id' && k !== 'name' && k !== 'type')
+    .filter(([, v]) => v !== null && v !== undefined && v !== '')
+    .map(([k, v]) => ({ key: k, label: META_LABELS[k] || k, value: String(v) }))
+}
+
 /* ======== 卡片 4: 模块化 ======== */
 const modules = ref([])
 const moduleLoading = ref({})
@@ -442,21 +461,9 @@ onMounted(async () => {
               </div>
             </div>
             <div class="model-card-body">
-              <div class="model-card-field" v-if="selectedModel.params">
-                <span class="field-label">参数量</span>
-                <span class="field-value">{{ selectedModel.params }}</span>
-              </div>
-              <div class="model-card-field" v-if="selectedModel.sparsity">
-                <span class="field-label">稀疏率</span>
-                <span class="field-value">{{ selectedModel.sparsity }}</span>
-              </div>
-              <div class="model-card-field" v-if="selectedModel.wrr">
-                <span class="field-label">WRR</span>
-                <span class="field-value">{{ selectedModel.wrr }}</span>
-              </div>
-              <div class="model-card-field" v-if="selectedModel.task">
-                <span class="field-label">任务</span>
-                <span class="field-value">{{ selectedModel.task }}</span>
+              <div class="model-card-field" v-for="f in getMetaFields(selectedModel)" :key="f.key">
+                <span class="field-label">{{ f.label }}</span>
+                <span class="field-value">{{ f.value }}</span>
               </div>
               <div class="model-card-desc" v-if="selectedModel.desc">
                 {{ selectedModel.desc }}
@@ -737,30 +744,29 @@ onMounted(async () => {
   margin: 0;
 }
 .model-card-body {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px 24px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px 16px;
 }
 .model-card-field {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  min-width: 100px;
 }
 .field-label {
   font-size: 11px;
   color: #6b7280;
   font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
 }
 .field-value {
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 600;
   color: #1f2937;
+  word-break: break-word;
 }
 .model-card-desc {
-  width: 100%;
+  grid-column: 1 / -1;
   font-size: 13px;
   color: #4b5563;
   line-height: 1.6;

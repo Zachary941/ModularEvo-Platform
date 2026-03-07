@@ -7,7 +7,7 @@ const entries = [
   {
     emoji: '🧬',
     title: 'ModularEvo 模块化进化',
-    desc: '基于 CodeBERT 的模型模块化全流程：通过稀疏化训练提取功能模块，结合下游微调与多种合并方法（Task Arithmetic、TIES、DARE、简单平均），实现跨任务知识迁移与模型能力组合。',
+    desc: '基于模块化的模型协同进化框架全流程：通过模块化训练提取功能模块，结合下游微调与多种合并方法（Task Arithmetic、TIES、DARE、简单平均），实现跨任务知识迁移与模型能力组合。',
     tags: ['稀疏化训练', '模块提取', '微调适配', '合并评测'],
     route: '/modularevo',
     color: '#7c3aed',
@@ -18,13 +18,13 @@ const entries = [
   {
     emoji: '🔀',
     title: 'AutoRouter 自动组合',
-    desc: '基于 GPT-Neo 125M 的 Router 动态合并方法：训练任务向量和路由器权重，智能选择最优模块组合，支持上传混合数据集进行实时评测，展示归一化准确率。',
+    desc: '基于输入识别的 Router 动态合并方法：训练路由器权重，智能选择最优模块组合，支持上传混合数据集进行实时评测，展示归一化准确率。',
     tags: ['Router 路由', '动态合并', 'Task Vector', '实时评测'],
     route: '/autorouter',
     color: '#10b981',
     gradient: 'linear-gradient(135deg, #10b981 0%, #34d399 50%, #6ee7b7 100%)',
     image: '/images/router.png',
-    highlights: ['GPT-Neo 125M 基座', 'Router 动态权重', '归一化准确率'],
+    highlights: ['GPT-Neo 125M 模型', 'Router 动态权重', '自动匹配分类头'],
   },
 ]
 </script>

@@ -21,3 +21,11 @@ frontend/node_modules/
 
 # 数据库
 *.db
+
+*.pth
+*.pt
+*.h5
+*.bin
+*.safetensors
+*.pdf
+data/
