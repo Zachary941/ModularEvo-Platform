@@ -26,6 +26,43 @@ const allModels = ref([])
 const selectedModelId = ref('')
 const selectedModel = computed(() => allModels.value.find(m => m.id === selectedModelId.value))
 
+// 模型家族树数据
+const modelTreeData = computed(() => [
+  {
+    id: 'codebert', label: 'CodeBERT', icon: '🧠',
+    children: [
+      {
+        id: 'module-java', label: 'Module-Java', icon: '🧩',
+        children: [
+          { id: 'ft-clone', label: 'FT-CloneDet', icon: '🔧' },
+        ],
+      },
+      {
+        id: 'module-python', label: 'Module-Python', icon: '🧩',
+        children: [
+          { id: 'ft-search', label: 'FT-CodeSearch', icon: '🔧' },
+        ],
+      },
+      { id: 'merged', label: 'Merged-Model', icon: '🔗' },
+    ],
+  },
+])
+const treeProps = { children: 'children', label: 'label' }
+function handleTreeNodeClick(data) {
+  selectedModelId.value = data.id
+}
+
+// 模型类型样式映射
+const MODEL_TYPE_STYLES = {
+  pretrained: { bg: 'linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%)', border: '#a78bfa', color: '#5b21b6', label: '预训练模型', icon: '🧠' },
+  module:     { bg: 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)', border: '#34d399', color: '#065f46', label: '稀疏模块', icon: '🧩' },
+  finetuned:  { bg: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)', border: '#fbbf24', color: '#92400e', label: '微调模型', icon: '🔧' },
+  merged:     { bg: 'linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)', border: '#f87171', color: '#991b1b', label: '合并模型', icon: '🔗' },
+}
+function getModelStyle(type) {
+  return MODEL_TYPE_STYLES[type] || MODEL_TYPE_STYLES.pretrained
+}
+
 /* ======== 卡片 4: 模块化 ======== */
 const modules = ref([])
 const moduleLoading = ref({})
@@ -361,39 +398,74 @@ onMounted(async () => {
       <template #header>
         <div class="card-header">
           <span class="card-icon">📦</span>
-          <span class="card-title">模型信息</span>
+          <span class="card-title">模型信息 — 模型家族树</span>
         </div>
       </template>
       <div class="model-info-layout">
-        <div class="model-list">
-          <el-select v-model="selectedModelId" placeholder="选择模型" style="width: 220px;">
-            <el-option
-              v-for="m in allModels" :key="m.id"
-              :value="m.id"
-              :label="m.name"
-            >
-              <span class="model-type-dot" :class="m.type"></span>
-              <span>{{ m.name }}</span>
-            </el-option>
-          </el-select>
+        <!-- 左侧: 模型家族树 -->
+        <div class="model-tree-wrap">
+          <el-tree
+            :data="modelTreeData"
+            :props="treeProps"
+            default-expand-all
+            highlight-current
+            node-key="id"
+            :current-node-key="selectedModelId"
+            @node-click="handleTreeNodeClick"
+          >
+            <template #default="{ data }">
+              <span class="tree-node">
+                <span class="tree-node-icon">{{ data.icon }}</span>
+                <span class="tree-node-label">{{ data.label }}</span>
+              </span>
+            </template>
+          </el-tree>
         </div>
-        <div class="model-detail" v-if="selectedModel">
-          <el-descriptions :column="2" border size="small">
-            <el-descriptions-item label="模型名称">{{ selectedModel.name }}</el-descriptions-item>
-            <el-descriptions-item label="类型">
-              <el-tag
-                size="small"
-                :type="selectedModel.type === 'pretrained' ? '' : selectedModel.type === 'module' ? 'success' : selectedModel.type === 'finetuned' ? 'warning' : 'danger'"
-              >
-                {{ {pretrained:'预训练', module:'稀疏模块', finetuned:'微调模型', merged:'合并模型'}[selectedModel.type] || selectedModel.type }}
-              </el-tag>
-            </el-descriptions-item>
-            <el-descriptions-item label="参数量" v-if="selectedModel.params">{{ selectedModel.params }}</el-descriptions-item>
-            <el-descriptions-item label="稀疏率" v-if="selectedModel.sparsity">{{ selectedModel.sparsity }}</el-descriptions-item>
-            <el-descriptions-item label="WRR" v-if="selectedModel.wrr">{{ selectedModel.wrr }}</el-descriptions-item>
-            <el-descriptions-item label="任务" v-if="selectedModel.task">{{ selectedModel.task }}</el-descriptions-item>
-            <el-descriptions-item label="描述" v-if="selectedModel.desc" :span="2">{{ selectedModel.desc }}</el-descriptions-item>
-          </el-descriptions>
+        <!-- 右侧: 模型详情卡片 -->
+        <div class="model-detail-card-wrap" v-if="selectedModel">
+          <div
+            class="model-detail-card"
+            :style="{
+              background: getModelStyle(selectedModel.type).bg,
+              borderColor: getModelStyle(selectedModel.type).border,
+            }"
+          >
+            <div class="model-card-header">
+              <span class="model-card-icon">{{ getModelStyle(selectedModel.type).icon }}</span>
+              <div class="model-card-title-group">
+                <h3 class="model-card-name">{{ selectedModel.name }}</h3>
+                <el-tag
+                  size="small" effect="dark" round
+                  :color="getModelStyle(selectedModel.type).border"
+                  style="border: none; color: #fff;"
+                >{{ getModelStyle(selectedModel.type).label }}</el-tag>
+              </div>
+            </div>
+            <div class="model-card-body">
+              <div class="model-card-field" v-if="selectedModel.params">
+                <span class="field-label">参数量</span>
+                <span class="field-value">{{ selectedModel.params }}</span>
+              </div>
+              <div class="model-card-field" v-if="selectedModel.sparsity">
+                <span class="field-label">稀疏率</span>
+                <span class="field-value">{{ selectedModel.sparsity }}</span>
+              </div>
+              <div class="model-card-field" v-if="selectedModel.wrr">
+                <span class="field-label">WRR</span>
+                <span class="field-value">{{ selectedModel.wrr }}</span>
+              </div>
+              <div class="model-card-field" v-if="selectedModel.task">
+                <span class="field-label">任务</span>
+                <span class="field-value">{{ selectedModel.task }}</span>
+              </div>
+              <div class="model-card-desc" v-if="selectedModel.desc">
+                {{ selectedModel.desc }}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div v-else class="model-detail-placeholder">
+          <el-empty description="点击左侧树节点查看模型信息" :image-size="80" />
         </div>
       </div>
     </el-card>
@@ -598,26 +670,109 @@ onMounted(async () => {
 /* ── 卡片 3: 模型信息 ── */
 .model-info-layout {
   display: flex;
-  gap: 20px;
+  gap: 24px;
+  min-height: 220px;
 }
-.model-list {
+.model-tree-wrap {
   flex-shrink: 0;
+  width: 220px;
+  background: #fafafa;
+  border-radius: 10px;
+  padding: 12px 8px;
+  border: 1px solid #e5e7eb;
 }
-.model-type-dot {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  margin-right: 4px;
-  vertical-align: middle;
+.model-tree-wrap :deep(.el-tree) {
+  background: transparent;
+  --el-tree-node-hover-bg-color: #ede9fe;
 }
-.model-type-dot.pretrained { background: #6366f1; }
-.model-type-dot.module { background: #10b981; }
-.model-type-dot.finetuned { background: #f59e0b; }
-.model-type-dot.merged { background: #ef4444; }
-.model-detail {
+.model-tree-wrap :deep(.el-tree-node.is-current > .el-tree-node__content) {
+  background: #ddd6fe;
+  border-radius: 6px;
+}
+.tree-node {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+.tree-node-icon {
+  font-size: 16px;
+}
+.tree-node-label {
+  font-weight: 500;
+  color: #374151;
+}
+.model-detail-card-wrap {
   flex: 1;
   min-width: 0;
+}
+.model-detail-card {
+  border: 2px solid;
+  border-radius: 14px;
+  padding: 20px 24px;
+  height: 100%;
+  box-sizing: border-box;
+  transition: all 0.3s ease;
+}
+.model-card-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+}
+.model-card-icon {
+  font-size: 36px;
+}
+.model-card-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.model-card-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+}
+.model-card-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+}
+.model-card-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 100px;
+}
+.field-label {
+  font-size: 11px;
+  color: #6b7280;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.field-value {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1f2937;
+}
+.model-card-desc {
+  width: 100%;
+  font-size: 13px;
+  color: #4b5563;
+  line-height: 1.6;
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(0,0,0,0.06);
+}
+.model-detail-placeholder {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* ── 卡片 4: 模块化 ── */

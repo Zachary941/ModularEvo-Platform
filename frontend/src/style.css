@@ -22,6 +22,14 @@
   /* 侧边栏 */
   --sidebar-width: 220px;
   --header-height: 56px;
+  /* 圆角 */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  /* 阴影 */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 14px rgba(0,0,0,0.06);
+  --shadow-lg: 0 12px 40px rgba(91,33,182,0.08);
 }
 
 * {
@@ -43,14 +51,56 @@ body {
   min-height: 100vh;
 }
 
+/* 全局滚动条美化 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(124, 58, 237, 0.18);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(124, 58, 237, 0.35);
+}
+
+/* 全局 el-card 美化 */
+.el-card {
+  border-radius: var(--radius-md) !important;
+  border: 1px solid var(--border-color) !important;
+  transition: box-shadow 0.3s ease, transform 0.3s ease, border-color 0.3s ease !important;
+}
+.el-card:hover {
+  box-shadow: var(--shadow-md) !important;
+}
+
+/* 全局 el-button 圆角增强 */
+.el-button--primary {
+  transition: all 0.25s ease !important;
+}
+.el-button--primary:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+/* 全局 el-tag 美化 */
+.el-tag {
+  border-radius: 12px !important;
+}
+
 /* Element Plus 主题覆盖 */
 .el-menu--horizontal > .el-menu-item.is-active {
   border-bottom-color: #ffffff !important;
   color: #ffffff !important;
+  background-color: rgba(255, 255, 255, 0.12) !important;
 }
 .el-menu--horizontal > .el-menu-item {
   color: rgba(255, 255, 255, 0.8) !important;
   border-bottom-color: transparent !important;
+  background-color: transparent !important;
 }
 .el-menu--horizontal > .el-menu-item:hover {
   color: #ffffff !important;

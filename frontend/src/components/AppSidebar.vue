@@ -174,7 +174,7 @@ onUnmounted(() => {
   left: 0;
   width: var(--sidebar-width);
   height: calc(100vh - var(--header-height));
-  background: var(--bg-sidebar);
+  background: linear-gradient(180deg, var(--bg-sidebar) 0%, #faf5ff 100%);
   border-right: 1px solid var(--border-color);
   padding: 14px 10px;
   display: flex;
@@ -187,8 +187,12 @@ onUnmounted(() => {
 .sidebar-section {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 12px;
+  transition: box-shadow 0.2s ease;
+}
+.sidebar-section:hover {
+  box-shadow: 0 2px 8px rgba(91, 33, 182, 0.06);
 }
 
 .section-title {
@@ -318,7 +322,7 @@ onUnmounted(() => {
   width: 4px;
 }
 .app-sidebar::-webkit-scrollbar-thumb {
-  background: #d1d5db;
+  background: rgba(124, 58, 237, 0.18);
   border-radius: 4px;
 }
 </style>

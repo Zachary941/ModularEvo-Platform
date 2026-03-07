@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { House, DataLine, SetUp, Share } from '@element-plus/icons-vue'
+import { House, SetUp, Share } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -34,10 +34,6 @@ const handleSelect = (index) => {
           <el-icon><House /></el-icon>
           <span>首页</span>
         </el-menu-item>
-        <el-menu-item index="/models">
-          <el-icon><DataLine /></el-icon>
-          <span>模型介绍</span>
-        </el-menu-item>
         <el-menu-item index="/modularevo">
           <el-icon><SetUp /></el-icon>
           <span>ModularEvo 进化</span>
@@ -63,11 +59,11 @@ const handleSelect = (index) => {
   left: 0;
   right: 0;
   height: var(--header-height);
-  background: var(--primary-color);
+  background: linear-gradient(135deg, var(--primary-dark, #4c1d95) 0%, var(--primary-color, #5b21b6) 50%, var(--primary-light, #7c3aed) 100%);
   display: flex;
   align-items: center;
-  padding: 0 20px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  padding: 0 24px;
+  box-shadow: 0 2px 12px rgba(91, 33, 182, 0.3);
   z-index: 100;
 }
 
@@ -80,22 +76,30 @@ const handleSelect = (index) => {
   display: flex;
   align-items: center;
   text-decoration: none;
-  gap: 8px;
+  gap: 10px;
+  transition: opacity 0.2s;
+}
+.logo-link:hover {
+  opacity: 0.9;
 }
 
 .logo-icon {
-  font-size: 22px;
+  font-size: 24px;
+  filter: drop-shadow(0 0 4px rgba(255,255,255,0.3));
 }
 
 .logo-text {
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 800;
   color: #ffffff;
   letter-spacing: 0.5px;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 
 .header-center {
   flex: 1;
+  display: flex;
+  justify-content: center;
 }
 
 .header-menu {
@@ -108,14 +112,22 @@ const handleSelect = (index) => {
   height: var(--header-height);
   line-height: var(--header-height);
   font-size: 14px;
-  padding: 0 18px;
+  font-weight: 500;
+  padding: 0 20px;
+  border-radius: 8px;
+  margin: 0 2px;
+  transition: all 0.2s ease !important;
 }
 
 .header-right {
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  padding: 4px 14px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(4px);
 }
 
 .status-dot {
@@ -123,11 +135,18 @@ const handleSelect = (index) => {
   height: 8px;
   border-radius: 50%;
   background: var(--success-color);
-  box-shadow: 0 0 6px var(--success-color);
+  box-shadow: 0 0 8px var(--success-color);
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 4px var(--success-color); }
+  50% { box-shadow: 0 0 12px var(--success-color); }
 }
 
 .status-text {
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
 }
 </style>

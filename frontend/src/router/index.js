@@ -8,11 +8,6 @@ const routes = [
     component: HomeView,
   },
   {
-    path: '/models',
-    name: 'models',
-    component: () => import('../views/ModelsView.vue'),
-  },
-  {
     path: '/modularevo',
     name: 'modularevo',
     component: () => import('../views/ModularEvoView.vue'),
