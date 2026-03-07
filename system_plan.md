@@ -1,7 +1,7 @@
-# TransModular Demo 系统开发手册
+# LLMOps Platform — 系统开发手册
 
-> **版本**: v0.3 (技术细节确认后更新)  
-> **更新日期**: 2026-03-06  
+> **版本**: v0.4 (UI 重构版)  
+> **更新日期**: 2026-03-07  
 > **技术栈**: FastAPI + Vue 3 + Element Plus + ECharts + SQLite  
 
 ---
@@ -14,15 +14,17 @@
 
 ### 1.2 核心展示内容
 
-| 页面 | 章节 | 基座模型 | 展示流程 |
-|------|------|----------|----------|
-| 页面 A：模块化全流程 | 第三章 | CodeBERT (codebert-base) | 模块化 → 下游任务微调 → 模型合并 |
-| 页面 B：Router 动态合并 | 第四章 | GPT-Neo 125M | 预部署模型 + Router → 用户上传数据集 → 评测输出 |
+| 页面 | 算法名称 | 基座模型 | 展示流程 |
+|------|----------|----------|----------|
+| ModularEvo 进化 | 第三章 — 模块化进化 | CodeBERT (codebert-base) | 模块化 → 稀疏微调 → 知识组合（模型合并） |
+| AutoRouter 自动组合 | 第四章 — Router 动态合并 | GPT-Neo 125M | 输入识别 → 权重组合 → 自动匹配分类头 |
 
-### 1.3 页面通用元素
+### 1.3 全局 UI 框架
 
-- **顶部知识图谱**：每个页面顶部展示一个交互式知识图谱，用节点表示模型/模块，用有向边表示关系（微调、模块化、模块微调、合并）。
-- **无需用户认证**：内部展示系统，不设置登录功能。
+- **布局风格**: 经典 Admin Dashboard — 左侧固定侧栏 + 顶部固定导航 + 右侧主内容滚动区
+- **主题配色**: 浅色主题，顶部导航栏为深紫色
+- **UI 组件库**: Element Plus (Vue 3)
+- **无需用户认证**: 内部展示系统
 
 ---
 
@@ -31,24 +33,32 @@
 ### 2.1 整体架构图
 
 ```
-┌─────────────────────────────────────────────┐
-│                  前端 (Vue 3)                │
-│  ┌──────────┐  ┌──────────┐  ┌───────────┐  │
-│  │ 知识图谱  │  │ 页面A    │  │ 页面B     │  │
-│  │ (D3.js/  │  │ 模块化   │  │ Router    │  │
-│  │  ECharts)│  │ 全流程   │  │ 动态合并  │  │
-│  └──────────┘  └──────────┘  └───────────┘  │
-└──────────────────┬──────────────────────────┘
-                   │ REST API / WebSocket
+┌──────────────────────────────────────────────────────────────┐
+│ 顶部导航栏 (深紫色)                                          │
+│ [Logo: LLMOps Platform] 首页 | 模型介绍 | ModularEvo | AutoRouter  [🟢 系统正常] │
+├──────────┬───────────────────────────────────────────────────┤
+│ 左侧栏   │ 主内容区 (滚动)                                   │
+│ ┌──────┐ │                                                   │
+│ │运行   │ │  根据导航切换显示不同页面:                         │
+│ │任务   │ │  - 首页: 算法介绍 + 入口卡片                     │
+│ │      │ │  - 模型介绍: 各模型详情                           │
+│ │ModEvo│ │  - ModularEvo: 6 行功能卡片                      │
+│ │Router│ │  - AutoRouter: 4 行功能卡片                      │
+│ ├──────┤ │                                                   │
+│ │系统   │ │                                                   │
+│ │状态   │ │                                                   │
+│ │      │ │                                                   │
+│ │GPU   │ │                                                   │
+│ │MEM   │ │                                                   │
+│ └──────┘ │                                                   │
+└──────────┴───────────────────────────────────────────────────┘
+                   │ REST API
 ┌──────────────────▼──────────────────────────┐
 │               后端 (FastAPI)                 │
 │  ┌──────────────────────────────────────┐   │
-│  │ API 层: 任务管理 / 模型管理 / 评测   │   │
+│  │ API 层: 系统状态 / 模型管理 / 评测   │   │
 │  ├──────────────────────────────────────┤   │
-│  │ 服务层: 模块化引擎 / 合并引擎 /     │   │
-│  │         Router推理 / 评测服务        │   │
-│  ├──────────────────────────────────────┤   │
-│  │ 算法层: Tran_SeaM / TransModular_GPT│   │
+│  │ 算法层: chapter3 / chapter4          │   │
 │  └──────────────────────────────────────┘   │
 │  ┌──────────┐  ┌───────────────────────┐    │
 │  │ SQLite   │  │ 文件存储 (模型/数据)  │    │
@@ -73,311 +83,309 @@
 ```
 demo_system/
 ├── backend/                     # FastAPI 后端
-│   ├── main.py                  # 应用入口
+│   ├── main.py                  # 应用入口 (CORS + 根路径重定向 /docs)
 │   ├── api/                     # API 路由
-│   │   ├── chapter3.py          # 第三章相关接口
-│   │   ├── chapter4.py          # 第四章相关接口
-│   │   └── graph.py             # 知识图谱数据接口
-│   ├── services/                # 业务逻辑层
-│   │   ├── modularizer_svc.py   # 模块化服务 (封装 Tran_SeaM)
-│   │   ├── merge_svc.py         # 模型合并服务
-│   │   ├── router_svc.py        # Router 推理服务 (封装 TransModular_GPT)
-│   │   └── eval_svc.py          # 评测服务
+│   │   ├── chapter3.py          # ModularEvo 相关接口 (✅ 已有)
+│   │   ├── ch3_schemas.py       # ModularEvo Pydantic 模型 (✅ 已有)
+│   │   ├── chapter4.py          # AutoRouter 相关接口
+│   │   ├── ch4_schemas.py       # AutoRouter Pydantic 模型
+│   │   └── system.py            # 系统状态接口 (GPU/内存)
 │   ├── models/                  # 数据库模型 (SQLAlchemy)
-│   │   └── schemas.py           # Pydantic 请求/响应模型
-│   ├── core/                    # 配置、依赖注入
-│   │   └── config.py
-│   └── tasks/                   # 后台任务
-│       └── workers.py
+│   │   ├── database.py          # 数据库初始化
+│   │   └── schemas.py           # 公共 Pydantic 模型
+│   └── core/
+│       └── config.py
 ├── frontend/                    # Vue 3 前端
 │   ├── src/
+│   │   ├── App.vue              # 根组件 (Admin Dashboard 布局框架)
+│   │   ├── main.js              # 入口
+│   │   ├── style.css            # 全局样式 (深紫色主题变量)
+│   │   ├── router/
+│   │   │   └── index.js         # 路由: / /models /modularevo /autorouter
 │   │   ├── views/
-│   │   │   ├── Chapter3View.vue # 第三章页面
-│   │   │   ├── Chapter4View.vue # 第四章页面
-│   │   │   └── HomeView.vue     # 首页
+│   │   │   ├── HomeView.vue          # 首页 (算法介绍 + 入口卡片)
+│   │   │   ├── ModelsView.vue        # 模型介绍页
+│   │   │   ├── ModularEvoView.vue    # ModularEvo 进化页 (6 行卡片)
+│   │   │   └── AutoRouterView.vue    # AutoRouter 自动组合页 (4 行卡片)
 │   │   ├── components/
-│   │   │   ├── KnowledgeGraph.vue  # 知识图谱组件
-│   │   │   ├── ModuleFlowChart.vue # 流程可视化
-│   │   │   └── EvalResult.vue      # 评测结果展示
+│   │   │   ├── AppHeader.vue         # 顶部导航栏 (深紫色)
+│   │   │   ├── AppSidebar.vue        # 左侧侧边栏 (运行任务+系统状态)
+│   │   │   ├── KnowledgeGraph.vue    # 知识图谱组件 (ECharts 关系图)
+│   │   │   └── TerminalLog.vue       # 终端日志组件 (黑底绿字)
 │   │   └── api/                 # Axios 接口封装
+│   │       ├── index.js
+│   │       ├── chapter3.js      # ModularEvo API (✅ 已有)
+│   │       ├── chapter4.js      # AutoRouter API
+│   │       └── system.js        # 系统状态 API
 │   └── ...
-├── algorithm/                   # 算法适配层 (自包含，不依赖外部代码)
-│   ├── __init__.py
-│   ├── chapter3/                # 第三章适配（多文件，按职责拆分）
-│   │   ├── __init__.py
-│   │   ├── config.py            # 路径配置 & 预置资源路径常量
-│   │   ├── model_loader.py      # 模型加载：CodeBERT / mask模块 / 微调模型
-│   │   ├── modularizer.py       # 模块化训练逻辑 (预留接口)
-│   │   ├── evaluator.py         # 评测逻辑
-│   │   ├── merger.py            # 合并逻辑
-│   │   └── libs/                # 从原项目复制的核心依赖代码
-│   │       ├── __init__.py
-│   │       ├── mask_layer.py        # ← Tran_SeaM/mask_layer.py
-│   │       ├── sparse_utils.py      # ← Tran_SeaM/utils.py (摘取 load_init_module_sparse)
-│   │       ├── clone_model.py       # ← task_eval/code_clone_eval.py (Model + evaluate)
-│   │       ├── search_model.py      # ← task_eval/nl_code_search_eval.py (Model + evaluate)
-│   │       ├── merging_methods.py   # ← merge_methods/merging_methods.py (MergingMethod)
-│   │       ├── task_vector.py       # ← merge_methods/task_vector.py (TaskVector)
-│   │       ├── mask_weights_utils.py # ← merge_methods/mask_weights_utils.py
-│   │       └── merge_utils.py       # ← merge_utils/merge_utils.py (公共工具)
-│   └── chapter4/                # 第四章适配
-│       ├── __init__.py
-│       ├── adapter.py           # 适配层封装
-│       └── libs/                # 从 TransModular_GPT/router 复制的核心代码
-│           ├── __init__.py
-│           ├── config.py            # ← router/config.py (路径已改为本地)
-│           ├── router.py            # ← router/router.py (Router 网络)
-│           ├── merge.py             # ← router/merge.py (动态合并)
-│           ├── task_vectors.py      # ← router/task_vectors.py (任务向量加载)
-│           └── data.py              # ← router/data.py (数据预处理)
-├── data/                        # 所有模型和数据集 (自包含)
-│   ├── models/                  # 模型文件 (每个模型一个子目录)
-│   │   ├── codebert-base/           # CodeBERT 预训练基座
-│   │   ├── module_java/             # Java 模块化 mask (result/ 子目录)
-│   │   ├── module_python/           # Python 模块化 mask (result/ 子目录)
-│   │   ├── finetuned_clone/         # 克隆检测微调模型 checkpoint
-│   │   ├── finetuned_search/        # 代码搜索微调模型 checkpoint
-│   │   ├── gpt-neo-125m/            # GPT-Neo 125M 预训练基座
-│   │   ├── task_vectors/            # 第四章预计算任务向量 (4个 .pt)
-│   │   ├── heads/                   # 第四章分类头 (4个 .pt)
-│   │   └── router_checkpoint/       # Router 训练好的 checkpoint
-│   └── datasets/                # 评测数据集
-│       ├── clone_detection/         # test.txt + data.jsonl
-│       ├── code_search/             # cosqa_dev.json
-│       └── sample_datasets/         # mixed_sample_50.csv (第四章示例)
-└── docker-compose.yml           # 容器化部署 (可选)
+├── algorithm/                   # 算法适配层 (自包含)
+│   ├── chapter3/                # ModularEvo 适配 (✅ P1 已完成)
+│   │   ├── config.py / model_loader.py / evaluator.py / merger.py
+│   │   └── libs/                # 核心依赖代码
+│   └── chapter4/                # AutoRouter 适配
+│       ├── adapter.py
+│       └── libs/                # Router 核心代码
+├── data/                        # 所有模型和数据集 (自包含, ✅ 已迁移)
+│   ├── models/ / datasets/
+└── start.sh / stop.sh           # 一键启停脚本
 ```
 
-### 2.4 首页 (HomeView) 设计
+### 2.4 全局布局设计
 
-首页展示系统简介 + 两个章节入口卡片：
+#### 2.4.1 顶部导航栏 (AppHeader)
+
+```
+┌────────────────────────────────────────────────────────────────────┐
+│ [Logo] LLMOps Platform  🏠首页 📊模型介绍 🧬ModularEvo 🔀AutoRouter  🟢系统正常 │
+└────────────────────────────────────────────────────────────────────┘
+```
+
+- **背景色**: 深紫色 (`#5b21b6`)
+- **左侧**: 平台 Logo + 名称 "LLMOps Platform" (白色文字)
+- **中部**: 水平导航菜单 (`el-menu` mode=horizontal, 白色文字/下划线高亮)
+  - 🏠 首页 (路由 `/`)
+  - 📊 模型介绍 (路由 `/models`)
+  - 🧬 ModularEvo 进化 (路由 `/modularevo`)
+  - 🔀 AutoRouter 自动组合 (路由 `/autorouter`)
+- **右侧**: 🟢 小绿点 + "系统正常" 文字
+
+#### 2.4.2 左侧侧边栏 (AppSidebar)
+
+宽度约 220px，固定在左侧，分两个卡片区块垂直堆叠:
+
+**区块一: 运行任务 (Running Tasks)**
+| 项目 | 当前页面时 | 非当前页面时 |
+|------|----------|-------------|
+| ModularEvo 进化 | 浅黄色背景 + ⚙️齿轮旋转动画 | 蓝色齿轮(静止) |
+| AutoRouter 自动组合 | 浅黄色背景 + ⚙️齿轮旋转动画 | 蓝色齿轮(静止) |
+
+**区块二: 系统状态 (System Status)**
+- GPU 利用率: 右对齐数值 (如 `67%`)
+- 内存使用: 右对齐数值 (如 `24GB/32GB`)
+
+> 系统状态从后端 `/api/system/status` 接口轮询获取 (每 5 秒)
+
+#### 2.4.3 首页 (HomeView)
 
 ```
 ┌───────────────────────────────────────────────────┐
-│ TransModular Demo                                 │
-│ Transformer 模型模块化与动态合并展示系统           │
+│ LLMOps Platform                                   │
+│ 大语言模型模块化与动态合并展示平台                │
 │                                                   │
-│ [系统简介: 1-2 句话说明系统用途]               │
-│                                                   │
-│ ┌─────────────────────┐ ┌─────────────────────┐ │
-│ │  第三章               │ │  第四章               │ │
-│ │  CodeBERT 模块化      │ │  GPT-Neo Router       │ │
-│ │  全流程展示           │ │  动态合并展示         │ │
-│ │                     │ │                     │ │
-│ │  模块化 → 微调 → 合并│ │  上传数据 → 评测    │ │
-│ │  [进入 ▶]            │ │  [进入 ▶]            │ │
-│ └─────────────────────┘ └─────────────────────┘ │
+│ ┌─────────────────────┐ ┌─────────────────────┐   │
+│ │ 🧬 ModularEvo 进化   │ │ 🔀 AutoRouter 组合   │   │
+│ │ 基于 CodeBERT        │ │ 基于 GPT-Neo 125M   │   │
+│ │ 模块化 → 独立进化 →  │ │ 输入识别 → 权重组合 │   │
+│ │ 知识组合             │ │ → 自动匹配分类头     │   │
+│ │ [进入 ▶]             │ │ [进入 ▶]             │   │
+│ └─────────────────────┘ └─────────────────────┘   │
 └───────────────────────────────────────────────────┘
 ```
 
-- 简介文字: 简洁说明系统的目的（展示 Transformer 模型模块化与合并算法）
-- 卡片 A: 第三章入口，显示“CodeBERT 模块化全流程”，点击跳转到 `/chapter3`
-- 卡片 B: 第四章入口，显示“GPT-Neo Router 动态合并”，点击跳转到 `/chapter4`
-
 ---
 
-## 三、页面 A：第三章 — CodeBERT 模块化全流程展示
+## 三、ModularEvo 进化页面 (ModularEvoView)
 
-### 3.1 页面布局
+### 3.1 页面总体布局
+
+页面在主内容区内纵向排布 **6 行功能卡片** (`el-card`)，每行一个卡片，依次展示模块化进化的完整流程。
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│ [知识图谱区域]                                         │
-│ CodeBERT ──模块化──▶ Module-Java   Module-Python       │
-│                         │               │              │
-│                      模块微调        模块微调           │
-│                         ▼               ▼              │
-│                   FT-CloneDet(Java) FT-Search(Python)  │
-│                         ╲              ╱               │
-│                          ╲    合并    ╱                │
-│                           ▼         ▼                  │
-│                         Merged-Model                   │
-└─────────────────────────────────────────────────────────┘
-┌─────────────────────────────────────────────────────────┐
-│ Step 1: 模块化        │ Step 2: 微调     │ Step 3: 合并 │
-│ [快速演示模式]        │ [任务配置面板]   │ [合并配置]   │
-│ 加载预训练 mask:      │ ☑ 克隆检测(Java) │ - 合并方法   │
-│  ☑ Java 模块          │ ☑ 代码搜索(Py)   │ - 缩放系数   │
-│  ☑ Python 模块        │ [加载预微调模型] │ [开始合并]   │
-│ [加载模块]            │                  │              │
-│                       │ [结果展示]       │ [结果展示]   │
-│ [模块稀疏率/热力图]   │  F1 / Precision  │ 准确率对比   │
+│ 卡片 1: 算法介绍 — 模块化 → 独立进化 → 知识组合        │
+├─────────────────────────────────────────────────────────┤
+│ 卡片 2: 知识图谱 — CodeBERT 模型关系可视化              │
+├─────────────────────────────────────────────────────────┤
+│ 卡片 3: 模型信息 — 左侧模型选择列表 / 右侧参数详情     │
+├─────────────────────────────────────────────────────────┤
+│ 卡片 4: 模块化 — 模块稀疏度、权重保留率展示             │
+├─────────────────────────────────────────────────────────┤
+│ 卡片 5: 稀疏微调 — 加载微调模型 + 性能评测展示          │
+├─────────────────────────────────────────────────────────┤
+│ 卡片 6: 模型合并 — 方法选择 + 参数配置 + 终端日志输出    │
 └─────────────────────────────────────────────────────────┘
 ```
 
-### 3.2 功能模块
+### 3.2 卡片详细设计
 
-#### 3.2.1 Step 1 — 模块化 (Modularization)
+#### 3.2.1 卡片 1 — 算法介绍
 
-- **默认模式**: 快速演示模式 — 直接加载预训练好的 mask 文件
-- **可选语言模块**: Java（用于克隆检测）、Python（用于代码搜索）
-- **后端**: 调用 `Tran_SeaM/utils.py` 的 `load_init_module_sparse()` 加载预训练 mask
-- **预留接口**: `modularize()` 接口保留完整训练逻辑（调用 `modularizer.py`），供后续扩展
-- **输出展示**:
-  - 权重保留率 (Weight Retention Rate) 逐层可视化
-  - 最终稀疏掩码热力图
-  - 模块参数量 & 稀疏率统计
+- **内容**: 用简洁图文展示 ModularEvo 三步流程
+- **布局**: 横向三栏 (模块化 → 独立进化 → 知识组合)，每栏图标 + 简短描述
+- **纯展示**: 无交互，仅介绍算法思想
 
-#### 3.2.2 Step 2 — 下游任务微调
+#### 3.2.2 卡片 2 — 知识图谱
 
-- **固定任务** (两个任务均需展示，合并阶段需要至少 2 个任务模型):
-  - 代码克隆检测 (Clone Detection, BigCloneBench) — 使用 Java 模块
-  - 自然语言代码搜索 (NL Code Search) — 使用 Python 模块
-- **默认模式**: 加载预微调好的模型文件，直接展示评测结果
-- **预留接口**: `finetune()` 接口保留完整微调逻辑，供后续扩展
-- **后端**: 调用 `Tran_SeaM/task_merge/task_eval/` 相关代码进行评测
-- **输出展示**:
-  - 评测指标: 克隆检测 → F1, 代码搜索 → Precision
-  - 模型详情: 参数量、训练配置
+- **组件**: `<KnowledgeGraph>` (ECharts 关系图)
+- **数据**: 从 `GET /api/ch3/graph` 获取 6 节点 + 6 边
+- **节点**: CodeBERT (预训练) → Module-Java / Module-Python (模块) → FT-CloneDet / FT-CodeSearch (微调) → Merged-Model (合并)
+- **交互**: 悬停显示 Tooltip (参数量、稀疏率)
 
-#### 3.2.3 Step 3 — 模型合并
+#### 3.2.3 卡片 3 — 模型信息
 
-- **合并方法选择** (4 种): 
-  - Task Arithmetic
-  - TIES Merging
-  - DARE (对应代码中的 `mask_merging`)
-  - ModularEvo (本文方法，需新增实现)
-- **输入**: 选择合并方法、缩放系数
-- **合并对象**: 步骤 2 中的两个微调模型 (克隆检测-Java + 代码搜索-Python)
-- **后端**: 调用 `Tran_SeaM/task_merge/merge_lm.py`
-- **输出展示**:
-  - 合并后模型在两个任务上的准确率对比表 (F1 + Precision)
-  - 4 种合并方法的性能对比图
-  - 模型参数量变化
+- **左侧**: 模型选择列表 (`el-menu` 或 `el-radio-group`)，列出知识图谱中涉及的所有模型:
+  - CodeBERT (基座)
+  - Module-Java / Module-Python (稀疏模块)
+  - FT-CloneDet / FT-CodeSearch (微调模型)
+  - Merged-Model (合并后模型，合并完成后才可选)
+- **右侧**: 展示选中模型的详细信息
+  - 参数量 (如 124.6M)
+  - 模型类型 (预训练/模块/微调/合并)
+  - 其他元信息 (如路径、来源)
 
-### 3.3 知识图谱（页面 A）
+#### 3.2.4 卡片 4 — 模块化
 
-- **节点**:
-  - CodeBERT (预训练模型)
-  - Module-Java (Java 语言模块)
-  - Module-Python (Python 语言模块)
-  - FT-CloneDet (克隆检测微调模型)
-  - FT-CodeSearch (代码搜索微调模型)
-  - Merged-Model (合并后模型)
-- **边类型** (4 种):
-  - `模块化` (CodeBERT → Module-Java / Module-Python)
-  - `模块微调` (Module-Java → FT-CloneDet, Module-Python → FT-CodeSearch)
-  - `合并` (FT-CloneDet + FT-CodeSearch → Merged-Model)
-- **交互**: 点击节点查看模型详情（参数量、稀疏率、性能指标）
+- **功能**: 展示预训练好的稀疏模块的统计信息
+- **操作**: 选择语言模块 (Java / Python) → 点击"加载模块" → 调用 `POST /api/ch3/load-module`
+- **展示**:
+  - 模块稀疏率 (如 77.06%)、权重保留率 WRR (如 22.94%)、层数 (如 144 层)
+  - 逐层权重保留率 ECharts 柱状图 (bar chart)
+
+#### 3.2.5 卡片 5 — 稀疏微调 (模块微调)
+
+- **功能**: 加载预微调好的模型并展示评测性能
+- **操作**: 
+  - 加载按钮: 加载已有的微调模型 checkpoint
+  - 评测按钮: 调用 `POST /api/ch3/evaluate/{task}` (跑部分样本快速出结果，然后展示已有完整评测结果)
+- **展示**:
+  - 克隆检测: F1, Precision, Recall
+  - 代码搜索: Accuracy, Precision, Recall, F1
+  - 模型参数量 (Clone=125.8M, Search=127.0M)
+
+#### 3.2.6 卡片 6 — 模型合并
+
+- **顶部**: 合并方法选择 + 参数配置
+  - 合并方法 (`el-select`): **Task Arithmetic** / **TIES Merging** / **DARE** / **ModularEvo**
+  - 缩放系数输入框
+  - TIES 专用: `param_value_mask_rate` 滑块
+  - DARE 专用: `weight_mask_rate` 输入
+  - ModularEvo: 自动加载稀疏微调模型 (实际实现 = 稀疏微调 + Task Arithmetic，但前端不暴露此细节，与其他三种方法并列展示)
+  - 合并按钮: 调用 `POST /api/ch3/merge`
+
+- **底部**: 黑底终端日志区 (`<TerminalLog>` 组件)
+  - 视觉: 黑色背景 + 绿色/白色等宽字体，模仿终端
+  - 内容: 实时输出合并进度日志 (加载模型 → 计算任务向量 → 执行合并 → 评测中 → 完成)
+  - 合并完成后在日志区下方或旁边展示结果:
+    - 各任务准确率对比表
+    - 4 种方法性能对比柱状图 (如果已运行多种方法)
+
+**ModularEvo 合并方法特殊处理**:
+- 前端: 显示为独立方法 "ModularEvo"，与 Task Arithmetic / TIES / DARE 并列
+- 后端: 实际调用 = 稀疏微调模型 + Task Arithmetic 合并
+- 其他三种方法: 使用全微调模型
+
+### 3.3 知识图谱数据 (第三章)
+
+与已有 `GET /api/ch3/graph` 一致:
+
+- **节点** (6 个): CodeBERT, Module-Java, Module-Python, FT-CloneDet, FT-CodeSearch, Merged-Model
+- **边** (6 条): 模块化 ×2, 模块微调 ×2, 合并 ×2
+- **交互**: 悬停 Tooltip 显示模型详情
 
 ### 3.4 后端 API 设计
 
+> 已有 API (✅ P2 已实现，需在 UI 重构中适配前端调用方式):
+
 ```
-POST   /api/ch3/modularize          # 启动模块化任务
-GET    /api/ch3/modularize/{task_id} # 查询模块化进度
-POST   /api/ch3/finetune            # 启动微调任务
-GET    /api/ch3/finetune/{task_id}   # 查询微调进度
-POST   /api/ch3/merge               # 执行模型合并
-GET    /api/ch3/merge/{task_id}      # 查询合并结果
-GET    /api/ch3/models               # 获取可用模型列表
-GET    /api/ch3/graph                # 获取知识图谱数据
+GET    /api/ch3/modules              # 返回可用模块列表 (java/python)
+POST   /api/ch3/load-module          # 加载模块，返回稀疏率+逐层统计
+GET    /api/ch3/finetuned            # 返回微调模型信息
+POST   /api/ch3/evaluate/{task}      # 评测指定任务
+POST   /api/ch3/merge               # 执行合并+评测
+GET    /api/ch3/graph                # 返回知识图谱数据
+```
+
+> 需新增/修改 API:
+
+```
+GET    /api/ch3/models               # 返回所有模型详细信息 (供卡片3使用)
+POST   /api/ch3/merge               # 扩展: 支持 modularevo 方法 + 流式日志输出
 ```
 
 ---
 
-## 四、页面 B：第四章 — GPT-Neo Router 动态合并展示
+## 四、AutoRouter 自动组合页面 (AutoRouterView)
 
-### 4.1 页面布局
+### 4.1 页面总体布局
+
+页面纵向排布 **4 行功能卡片**:
 
 ```
-┌──────────────────────────────────────────────────┐
-│ [知识图谱区域]                                    │
-│           GPT-Neo-125M (Base)                    │
-│          ╱    ╱     ╲     ╲                      │
-│       微调  微调   微调   微调                    │
-│        ▼     ▼      ▼      ▼                     │
-│     Code  LangID  Law   Math                     │
-│        ╲     ╲      ╱     ╱                      │
-│         ▼ Router 动态合并 ▼                       │
-│           Merged Model                           │
-└──────────────────────────────────────────────────┘
-┌──────────────────────────────────────────────────┐
-│ 左侧: 预部署模型信息            右侧: 评测区域   │
-│ ┌──────────────────────┐ ┌─────────────────────┐ │
-│ │ 基座模型: GPT-Neo    │ │ 上传自定义数据集    │ │
-│ │ 任务模型:            │ │ [选择文件] [上传]   │ │
-│ │  ✅ Code (1006类)    │ │                     │ │
-│ │  ✅ LangID (6类)     │ │ 数据集格式要求:     │ │
-│ │  ✅ Law (13类)       │ │ CSV/JSON, 含 text   │ │
-│ │  ✅ Math (25类)      │ │ 和 label 字段       │ │
-│ │ Router: ✅ 已加载    │ │                     │ │
-│ │                      │ │ [开始评测]          │ │
-│ │ 任务向量 α 系数:     │ │                     │ │
-│ │ code=0.49 langid=... │ │ [评测结果区域]      │ │
-│ └──────────────────────┘ │ - 任务分类准确率    │ │
-│                          │ - 每任务 α 系数     │ │
-│ [模型性能基线展示]       │ - 混淆矩阵          │ │
-│ Code: 83.90%             │ - 性能对比图        │ │
-│ LangID: 91.73%           │                     │ │
-│ Law: 70.57%              │                     │ │
-│ Math: 95.85%             │                     │ │
-└──────────────────────────┴─────────────────────┘ │
-└──────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────┐
+│ 卡片 1: 算法介绍 — 输入识别 → 权重组合 → 自动匹配分类头 │
+├─────────────────────────────────────────────────────────┤
+│ 卡片 2: 知识图谱 — GPT-Neo 模型关系可视化               │
+├─────────────────────────────────────────────────────────┤
+│ 卡片 3: 模型信息 — 左侧模型选择 / 右侧参数详情          │
+├─────────────────────────────────────────────────────────┤
+│ 卡片 4: AutoRouter 评测 — 数据集上传 + 终端日志 + 结果   │
+└─────────────────────────────────────────────────────────┘
 ```
 
-### 4.2 功能模块
+### 4.2 卡片详细设计
 
-#### 4.2.1 预部署资源展示
+#### 4.2.1 卡片 1 — 算法介绍
 
-- **展示内容**:
-  - 基座模型信息 (GPT-Neo 125M, 参数量)
-  - 4 个微调后模型状态 (code/langid/law/math)
-  - Router 网络参数信息 (~98,952 参数)
-  - 各任务基线准确率
-- **数据来源**: 预加载的配置与评测结果
+- **布局**: 横向三栏 (输入识别 → 权重组合 → 自动匹配分类头)
+- **纯展示**: 图标 + 简短描述，介绍 AutoRouter 算法流程
 
-#### 4.2.2 自定义数据集上传与评测
+#### 4.2.2 卡片 2 — 知识图谱
 
-- **上传**: 用户上传 CSV/JSON 格式数据集（4 个已知任务的混合数据）
-  - 必需字段: `text` (输入文本), `label` (分类标签), `task_id` (任务标识: 0=code/1=langid/2=law/3=math)
-  - 后端限制: 最大 200 条样本（超出自动截断，UI 中不显性提示）
-- **评测流程**:
-  1. 数据预处理 & Tokenization
-  2. Router 网络推理 → 计算任务分布 α（数据集级别）
-  3. 按 α 动态合并任务向量 → 生成合并模型
-  4. 合并模型推理 → 分类结果
-  5. 对比基线模型 → 输出评测报告
-- **输出** (聚合指标为主，后续可扩展逐样本展示):
-  - 任务识别准确率 & 各任务 Recall
-  - 各任务分类准确率
-  - Router 学习到的 α 系数可视化
-  - 与单任务基线的对比柱状图
+- **组件**: `<KnowledgeGraph>` (复用 ModularEvo 同一组件，传入不同数据)
+- **数据**: 从 `GET /api/ch4/graph` 获取
+- **节点**: GPT-Neo 125M → FT-Code / FT-LangID / FT-Law / FT-Math → TaskVector ×4 → Router → Merged-Model
+- **交互**: 悬停节点显示参数量、基线准确率
 
-#### 4.2.3 可视化组件
+#### 4.2.3 卡片 3 — 模型信息
 
-- α 系数柱状图
-- 性能对比表格 (Merged vs. Baseline per task)
-- 任务识别准确率 & Recall 汇总表
-
-### 4.3 知识图谱（页面 B）
-
-- **节点**:
-  - GPT-Neo 125M (预训练基座)
+- **左侧**: 模型选择列表 (知识图谱中涉及的所有模型):
+  - GPT-Neo 125M (基座, ~125M params)
   - FT-Code / FT-LangID / FT-Law / FT-Math (微调模型)
-  - TaskVector-{task} (任务向量)
-  - Router (路由网络)
-  - Merged-Model (动态合并结果)
-- **边类型** (4 种):
-  - `微调` (GPT-Neo → FT-Model)
-  - `模块化` (FT-Model → TaskVector, 即 τ = θ_ft - θ_base)
-  - `合并` (TaskVector × N + Router → Merged-Model)
-- **交互**: 
-  - 点击 TaskVector 节点显示其稀疏率、层数信息
-  - 点击 Router 节点显示当前 α 系数分布
-  - 合并结果节点随评测结果动态更新
+  - Router (~98,952 params)
+  - 各 TaskVector
+- **右侧**: 选中模型的详细信息 (参数量、类型、基线性能等)
+
+#### 4.2.4 卡片 4 — AutoRouter 评测
+
+- **顶部**: 数据集上传区域
+  - 文件上传组件 (`el-upload`): 支持 CSV/JSON
+  - "下载示例数据集" 按钮 (预置 `mixed_sample_50.csv`)
+  - "开始评测" 按钮: 调用 `POST /api/ch4/evaluate`
+  - 数据集格式要求提示: `text + label + task_id`
+
+- **底部**: 左右两栏布局
+  - **左侧**: 黑底终端日志区 (`<TerminalLog>`)
+    - 实时输出评测流程日志 (加载模型 → Router 推理 → 计算 α → 合并 → 推理 → 完成)
+  - **右侧**: 评测结果区 (评测结束后出现)
+    - 任务分类准确率 (各 task 的 ACC)
+    - 每任务 α 系数 (Router 学习到的权重分布，柱状图)
+    - Merged vs. Baseline 对比表格
+    - 任务识别准确率 & Recall 汇总
+
+### 4.3 知识图谱数据 (第四章)
+
+- **节点**: GPT-Neo 125M, FT-Code/LangID/Law/Math, TaskVector ×4, Router, Merged-Model
+- **边类型**: 微调 (GPT-Neo → FT), 模块化 (FT → TaskVector), 合并 (TaskVector × N + Router → Merged)
 
 ### 4.4 后端 API 设计
 
 ```
-GET    /api/ch4/status               # 获取预部署模型/Router状态
-GET    /api/ch4/baseline             # 获取基线评测结果
+GET    /api/ch4/status               # 预部署模型/Router 加载状态
+GET    /api/ch4/baseline             # 4 任务基线准确率
+GET    /api/ch4/models               # 所有模型详细信息 (供卡片3)
 POST   /api/ch4/upload-dataset       # 上传自定义数据集
-POST   /api/ch4/evaluate             # 启动评测任务
+POST   /api/ch4/evaluate             # 启动评测 (返回流式日志)
 GET    /api/ch4/evaluate/{task_id}   # 查询评测进度与结果
-GET    /api/ch4/graph                # 获取知识图谱数据
+GET    /api/ch4/graph                # 知识图谱数据
 ```
 
----
+### 4.5 公共后端 API
+
+```
+GET    /api/system/status            # 系统状态 (GPU 利用率、内存使用)
+GET    /health                       # 健康检查
+```
+
 
 ## 五、知识图谱组件设计
 
@@ -841,8 +849,8 @@ DATASET_ROOT = os.path.join(DATA_ROOT, "datasets")   # → demo_system/data/data
 
 ### 8.2 模型加载与缓存
 
-- **按需加载、用完释放**: 页面 A 和页面 B 的模型不同时常驻 GPU
-- 进入某个章节页面时加载对应模型，切换页面时释放上一组
+- **按需加载、用完释放**: ModularEvo 和 AutoRouter 页面的模型不同时常驻 GPU
+- 进入某个功能页面时加载对应模型，切换页面时释放上一组
 - 使用 LRU 缓存策略管理已加载的微调模型
 - GPU 显存管理：同一时间只加载一个章节所需的模型到 GPU
 
@@ -878,7 +886,7 @@ text,label,task_id
 
 ### 8.5 示例数据集
 
-Demo 系统预置一个示例 CSV，用户可在页面 B 一键下载并直接上传体验：
+Demo 系统预置一个示例 CSV，用户可在 AutoRouter 页面一键下载并直接上传体验：
 
 - 文件: `data/sample_datasets/mixed_sample_50.csv`
 - 内容: 从 4 个任务的测试集中各抽取 ~12 条，共 50 条混合数据
@@ -920,94 +928,110 @@ npm run dev -- --port 3000
 
 ---
 
-## 十、开发计划 & 里程碑
+## 十、开发计划 & 里程碑 (v0.4 UI 重构版)
 
-> 每个阶段设计为可独立验证的最小交付单元。完成每一步后可执行对应验证方式确认正确性。
+> 每个阶段设计为可独立验证的最小交付单元。✅ 表示已完成，后续阶段从 **P2 (UI 重构)** 开始。
 
-### P0: 项目初始化 & 基础框架搭建
+### P0: 项目初始化 & 基础框架搭建 ✅
 
-| 步骤 | 内容 | 验证方式 |
-|------|------|----------|
-| P0.1 | 创建项目目录结构 (backend/frontend/algorithm/data) | `tree demo_system/` 确认目录结构完整 |
-| P0.2 | FastAPI 后端空壳: main.py + CORS + 健康检查接口 | `curl http://localhost:8000/health` 返回 `{"status": "ok"}` |
-| P0.3 | Vue 3 + Vite + Element Plus 前端空壳: 路由配置 (首页/第三章/第四章) + 首页布局 (简介+两张入口卡片) | 浏览器访问 `http://localhost:3000`，首页显示两张卡片，点击可跳转 |
-| P0.4 | SQLite 数据库初始化 (tasks/models/evaluations 三张表) | 启动后端后 `sqlite3 demo.db ".tables"` 确认三张表存在 |
-| P0.5 | 准备示例数据集 `data/sample_datasets/mixed_sample_50.csv` | `wc -l mixed_sample_50.csv` 确认 50 条，含 4 种 task_id |
-| P0.6 | 一键启停脚本 (start.sh / stop.sh)，已在容器内运行无需 Docker | `bash start.sh` 可同时启动前后端服务，`curl localhost:8000/health` + 浏览器 `localhost:3000` 确认 |
+| 步骤 | 内容 | 状态 |
+|------|------|------|
+| P0.1 | 创建项目目录结构 (backend/frontend/algorithm/data) | ✅ |
+| P0.2 | FastAPI 后端: main.py + CORS + 健康检查 + 根路径重定向 /docs | ✅ |
+| P0.3 | Vue 3 + Vite + Element Plus 前端空壳 + 路由 | ✅ |
+| P0.4 | SQLite 数据库初始化 | ✅ |
+| P0.5 | 示例数据集 `mixed_sample_50.csv` | ✅ |
+| P0.6 | 一键启停脚本 (start.sh / stop.sh) | ✅ |
 
-### P1: 第三章算法适配层 (`algorithm/chapter3/`)
+### P1: 第三章算法适配层 ✅
 
-> 代码组织在 `demo_system/algorithm/chapter3/` 目录下，按职责拆分为 5 个文件。
+| 步骤 | 文件 | 内容 | 状态 |
+|------|------|------|------|
+| P1.1 | `config.py` | 路径配置常量 | ✅ |
+| P1.2 | `model_loader.py` | `load_base_model()` — CodeBERT 124.6M | ✅ |
+| P1.3 | `model_loader.py` | `load_sparse_module()` — Java WRR=22.94%, 144层 | ✅ |
+| P1.4 | `model_loader.py` | `load_finetuned_model()` — Clone=125.8M, Search=127.0M | ✅ |
+| P1.5 | `evaluator.py` | `evaluate_clone()` | ✅ |
+| P1.6 | `evaluator.py` | `evaluate_search()` | ✅ |
+| P1.7 | `merger.py` | `merge_models()` — 3 种合并方法 | ✅ |
+| P1.8 | `merger.py` | `merge_and_evaluate()` — 合并+评测一体化 | ✅ |
+| P1.9 | 集成验证 | GPU 全流程验证 | ✅ |
 
-| 步骤 | 文件 | 内容 | 验证方式 |
-|------|------|------|----------|
-| P1.1 | `config.py` | 路径配置：CODEBERT_PATH / MODULE_PATHS / FINETUNED_PATHS / EVAL_DATA_PATHS / MERGE_METHODS 常量 | ✅ 所有路径 exists=True |
-| P1.2 | `model_loader.py` | `load_base_model()` — 加载 CodeBERT 基座 + tokenizer + config | ✅ RobertaModel 124.6M params |
-| P1.3 | `model_loader.py` | `load_sparse_module(lang)` — 加载预训练 mask，返回稀疏率 + 逐层统计 | ✅ Java: sparsity=77.06%, WRR=22.94%, 144 layers |
-| P1.4 | `model_loader.py` | `load_finetuned_model(task)` — 加载微调后的克隆检测/代码搜索模型 | ✅ Clone=125.8M, Search=127.0M |
-| P1.5 | `evaluator.py` | `evaluate_clone()` — 封装克隆检测评测 | ✅ 返回 {eval_f1, eval_precision, eval_recall} |
-| P1.6 | `evaluator.py` | `evaluate_search()` — 封装代码搜索评测 | ✅ 返回 {acc, precision, recall, f1} |
-| P1.7 | `merger.py` | `merge_models(method, ...)` — 封装 3 种合并方法 | ✅ task_arithmetic 返回 199 keys |
-| P1.8 | `merger.py` | `merge_and_evaluate(method)` — 合并 + 双任务评测一体化 | ✅ 流程验证通过 |
-| P1.9 | 集成验证 | 导入、配置、GPU 加载、合并流程全部验证 | ✅ All tests PASSED |
+### P1.5: 第三章后端 API ✅ (原 P2 后端部分)
 
-### P2: 第三章后端 API & 前端页面 A
+> 后端 API 已完成，UI 重构不影响后端接口。
 
-| 步骤 | 内容 | 验证方式 | 状态 |
-|------|------|----------|------|
-| P2.1 | 后端 API: `/api/ch3/modules` 返回可用模块列表 | `curl /api/ch3/modules` 返回 Java/Python 模块信息 JSON | ✅ |
-| P2.2 | 后端 API: `/api/ch3/load-module` 加载指定模块 + `/api/ch3/finetuned` 微调模型信息 + `/api/ch3/evaluate/{task}` 评测 | `curl -X POST /api/ch3/load-module` 返回模块稀疏率 77.06%、WRR 22.94%、144 层逐层统计 | ✅ |
-| P2.3 | 后端 API: `/api/ch3/merge` 执行合并 + 评测 | `curl -X POST /api/ch3/merge` 支持 task_arithmetic/ties/dare 三种方法 | ✅ |
-| P2.4 | 后端 API: `/api/ch3/graph` 返回知识图谱数据 | `curl /api/ch3/graph` 返回 6 节点 + 6 条边 JSON | ✅ |
-| P2.5 | 前端页面 A — Step 1 区域: 模块选择与加载，ECharts 柱状图展示逐层权重保留率 | 页面点击"加载 Java 模块"→ 显示逐层 bar chart + 稀疏率/WRR 标签 | ✅ |
-| P2.6 | 前端页面 A — Step 2 区域: 展示预微调模型的评测结果 | 页面显示克隆检测 F1 和代码搜索 Precision | ✅ |
-| P2.7 | 前端页面 A — Step 3 区域: 合并方法选择 + 结果对比图表 | 选择合并方法 → 配置系数 → 点击合并 → 显示准确率对比柱状图 | ✅ |
+| 步骤 | 内容 | 状态 |
+|------|------|------|
+| P1.5.1 | `GET /api/ch3/modules` 返回 Java/Python 模块信息 | ✅ |
+| P1.5.2 | `POST /api/ch3/load-module` 返回稀疏率+逐层统计 | ✅ |
+| P1.5.3 | `GET /api/ch3/finetuned` 微调模型信息 | ✅ |
+| P1.5.4 | `POST /api/ch3/evaluate/{task}` 评测 | ✅ |
+| P1.5.5 | `POST /api/ch3/merge` 合并+评测 (task_arithmetic/ties/dare) | ✅ |
+| P1.5.6 | `GET /api/ch3/graph` 知识图谱数据 (6节点+6边) | ✅ |
 
-> **P2 实现文件清单:**
-> - `backend/api/ch3_schemas.py` — Pydantic 请求/响应模型
-> - `backend/api/chapter3.py` — 6 个 API 端点 (modules/load-module/finetuned/evaluate/merge/graph)
-> - `frontend/src/api/chapter3.js` — Axios API 封装层
-> - `frontend/src/views/Chapter3View.vue` — 完整页面 (知识图谱 + 三步流程)
-
-### P3: 第四章算法适配层
-
-| 步骤 | 内容 | 验证方式 |
-|------|------|----------|
-| P3.1 | chapter4_adapter.py: `load_resources()` — 加载 GPT-Neo + 4 个任务向量 + Router | 调用返回 Status (各组件加载状态 + 参数量) |
-| P3.2 | chapter4_adapter.py: `get_baseline()` — 获取 4 个单任务基线准确率 | 返回 `{code: 83.90, langid: 91.73, law: 70.57, math: 95.85}` |
-| P3.3 | chapter4_adapter.py: `infer_router()` — 对混合数据集推理 α 系数 | 输入 50 条混合样本，返回 4 维 α 向量 |
-| P3.4 | chapter4_adapter.py: `merge_and_evaluate()` — 合并+评测全流程 | 输入混合数据集，返回各任务准确率 + α 系数 |
-
-### P4: 第四章后端 API & 前端页面 B
-
-| 步骤 | 内容 | 验证方式 |
-|------|------|----------|
-| P4.1 | 后端 API: `/api/ch4/status` 返回预部署模型状态 | `curl /api/ch4/status` 返回各组件加载状态 |
-| P4.2 | 后端 API: `/api/ch4/baseline` 返回基线性能 | `curl /api/ch4/baseline` 返回 4 任务准确率 |
-| P4.3 | 后端 API: `/api/ch4/upload-dataset` + `/api/ch4/evaluate` | 上传 CSV → 触发评测 → 轮询获取结果 |
-| P4.4 | 后端 API: `/api/ch4/graph` 返回知识图谱数据 | `curl /api/ch4/graph` 返回 nodes + edges JSON |
-| P4.5 | 前端页面 B — 左侧: 预部署模型信息卡片 | 页面加载后显示 GPT-Neo + 4 任务模型 + Router 状态 |
-| P4.6 | 前端页面 B — 右侧: 数据集上传 + 评测触发 | 上传 CSV 文件 → 点击评测 → 显示加载动画 |
-| P4.7 | 前端页面 B — 评测结果: α 系数图 + 准确率对比表 | 评测完成后展示 α 柱状图 + Merged vs. Baseline 表格 |
-
-### P5: 知识图谱组件
-
-| 步骤 | 内容 | 验证方式 |
-|------|------|----------|
-| P5.1 | KnowledgeGraph.vue 通用组件: ECharts 关系图渲染 | 传入 mock 数据，页面渲染出节点和边 |
-| P5.2 | 集成到页面 A: 第三章知识图谱 (6 节点 + 对应边) | 页面 A 顶部显示完整图谱，Tooltip 可交互 |
-| P5.3 | 集成到页面 B: 第四章知识图谱 (含 Router 节点) | 页面 B 顶部显示完整图谱，评测后动态更新 |
-
-### P6: 系统集成 & 部署
-
-| 步骤 | 内容 | 验证方式 |
-|------|------|----------|
-| P6.1 | 前后端联调: 全流程走通 (页面 A 三步 + 页面 B 上传评测) | 手动操作全流程无报错，结果数据正确 |
-| P6.2 | Docker 镜像打包 (含模型文件 + 前端构建产物) | `docker-compose up` 启动后可访问完整 Demo |
-| P6.3 | 实验室集群部署 & GPU 验证 | 集群容器中运行，GPU 推理速度正常 |
-| P6.4 | 用户验收: 完整演示流程录屏 | 录制 3-5 分钟演示视频，覆盖所有核心功能 |
+> **已有实现文件**: `backend/api/ch3_schemas.py`, `backend/api/chapter3.py`, `frontend/src/api/chapter3.js`
 
 ---
+
+### ★ P2: UI 重构 — 全局框架 + 公共组件 ← 从这里开始
+
+> 重构前端为 Admin Dashboard 布局，创建公共组件框架。
+
+| 步骤 | 内容 | 验证方式 |
+|------|------|----------|
+| P2.1 | **全局样式**: `style.css` 定义深紫色主题 CSS 变量 (#5b21b6 主色) | 浏览器检查样式变量生效 |
+| P2.2 | **AppHeader.vue**: 深紫色顶部导航栏 (Logo + 4个导航项 + 系统状态指示器) | 页面顶部显示深紫色导航栏，导航可切换 |
+| P2.3 | **AppSidebar.vue**: 左侧侧边栏 (运行任务区块 + 系统状态区块)，齿轮动画 | 侧边栏显示两个区块，切换页面时齿轮状态变化 |
+| P2.4 | **App.vue 布局重构**: `el-container` Admin Dashboard 布局 (Header + Sidebar + Main) | 页面呈现三栏布局，主内容区可滚动 |
+| P2.5 | **路由更新**: `router/index.js` 新增 `/models` `/modularevo` `/autorouter` 路由 | URL 切换正常，组件加载正确 |
+| P2.6 | **TerminalLog.vue**: 黑底终端日志组件 (等宽字体, 自动滚动, 支持 props 传入日志行) | 组件渲染黑底绿字终端效果 |
+| P2.7 | **KnowledgeGraph.vue**: 通用知识图谱组件 (接收 nodes/edges props, ECharts 关系图) | 传入 mock 数据渲染出图谱 |
+| P2.8 | **系统状态后端 API**: `GET /api/system/status` 返回 GPU/内存信息 | `curl /api/system/status` 返回 JSON |
+| P2.9 | **HomeView.vue**: 首页重写 (两个算法入口卡片 + 简介) | 首页显示两张卡片，点击可跳转 |
+
+### P3: UI 重构 — ModularEvo 进化页面
+
+| 步骤 | 内容 | 验证方式 |
+|------|------|----------|
+| P3.1 | **ModularEvoView.vue 卡片1**: 算法介绍 (三栏: 模块化→独立进化→知识组合) | 卡片显示三步图文介绍 |
+| P3.2 | **卡片2**: 知识图谱 (集成 `<KnowledgeGraph>`, 调用 `/api/ch3/graph`) | 页面显示 6 节点关系图 |
+| P3.3 | **卡片3**: 模型信息 (左侧模型选择列表 + 右侧详情展示) | 点击模型名显示参数量等信息 |
+| P3.4 | **卡片4**: 模块化 (选择语言模块+加载+稀疏率/WRR+逐层柱状图) | 加载 Java 模块显示 sparsity=77.06% + 柱状图 |
+| P3.5 | **卡片5**: 稀疏微调 (加载微调模型+评测+性能指标展示) | 评测后显示 F1, Precision, Recall |
+| P3.6 | **卡片6**: 模型合并 — 顶部方法选择(4种)+参数配置 | 选择方法后参数面板切换 |
+| P3.7 | **卡片6**: 底部终端日志区 (`<TerminalLog>`) + 合并结果展示 | 点击合并→终端输出日志→显示结果 |
+| P3.8 | **后端适配**: `/api/ch3/merge` 支持 modularevo 方法 + 日志流 | curl merge 传 modularevo 返回结果 |
+
+### P4: 第四章算法适配层 (`algorithm/chapter4/`)
+
+| 步骤 | 内容 | 验证方式 |
+|------|------|----------|
+| P4.1 | `adapter.py`: `load_resources()` — 加载 GPT-Neo + 4 任务向量 + Router | 返回各组件加载状态 + 参数量 |
+| P4.2 | `adapter.py`: `get_baseline()` — 4 个单任务基线准确率 | 返回 {code:83.90, langid:91.73, law:70.57, math:95.85} |
+| P4.3 | `adapter.py`: `infer_router()` — Router 推理 α 系数 | 输入 50 条混合样本，返回 4 维 α |
+| P4.4 | `adapter.py`: `merge_and_evaluate()` — 合并+评测 | 返回各任务准确率 + α 系数 |
+
+### P5: 第四章后端 API + AutoRouter 页面
+
+| 步骤 | 内容 | 验证方式 |
+|------|------|----------|
+| P5.1 | 后端 API: `/api/ch4/status` `/api/ch4/baseline` `/api/ch4/graph` `/api/ch4/models` | curl 验证各 API 正常 |
+| P5.2 | 后端 API: `/api/ch4/upload-dataset` + `/api/ch4/evaluate` | 上传 CSV → 触发评测 → 返回结果 |
+| P5.3 | **AutoRouterView.vue 卡片1**: 算法介绍 (输入识别→权重组合→自动匹配分类头) | 卡片显示三步介绍 |
+| P5.4 | **卡片2**: 知识图谱 (集成 `<KnowledgeGraph>`, 调用 `/api/ch4/graph`) | 显示 GPT-Neo 关系图 |
+| P5.5 | **卡片3**: 模型信息 (模型选择+详情) | 点击模型显示参数量/基线 |
+| P5.6 | **卡片4**: AutoRouter 评测 (上传+日志+结果) | 上传→终端日志→右侧出现 α 系数+准确率 |
+
+### P6: 模型介绍页 + 系统集成
+
+| 步骤 | 内容 | 验证方式 |
+|------|------|----------|
+| P6.1 | **ModelsView.vue**: 模型介绍页 (展示所有模型的详细信息) | `/models` 页面展示模型列表和介绍 |
+| P6.2 | 前后端联调: ModularEvo 全流程贯通 | 手动操作 6 张卡片无报错 |
+| P6.3 | 前后端联调: AutoRouter 全流程贯通 | 上传数据集→评测→结果展示 |
+| P6.4 | 系统集成验收 & 录屏 | 录制演示视频覆盖所有功能 |
+
 
 ## 十一、需求确认记录
 

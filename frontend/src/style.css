@@ -1,3 +1,29 @@
+:root {
+  /* 深紫色主题 */
+  --primary-color: #5b21b6;
+  --primary-light: #7c3aed;
+  --primary-dark: #4c1d95;
+  --primary-bg: #f5f3ff;
+  /* 功能色 */
+  --success-color: #10b981;
+  --warning-color: #f59e0b;
+  --danger-color: #ef4444;
+  --info-color: #6366f1;
+  /* 文本色 */
+  --text-primary: #1e1b4b;
+  --text-regular: #4b5563;
+  --text-secondary: #9ca3af;
+  /* 背景色 */
+  --bg-page: #f3f4f6;
+  --bg-card: #ffffff;
+  --bg-sidebar: #ffffff;
+  /* 边框 */
+  --border-color: #e5e7eb;
+  /* 侧边栏 */
+  --sidebar-width: 220px;
+  --header-height: 56px;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -9,10 +35,24 @@ body {
     'Microsoft YaHei', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  color: #303133;
-  background-color: #f5f7fa;
+  color: var(--text-primary);
+  background-color: var(--bg-page);
 }
 
 #app {
   min-height: 100vh;
+}
+
+/* Element Plus 主题覆盖 */
+.el-menu--horizontal > .el-menu-item.is-active {
+  border-bottom-color: #ffffff !important;
+  color: #ffffff !important;
+}
+.el-menu--horizontal > .el-menu-item {
+  color: rgba(255, 255, 255, 0.8) !important;
+  border-bottom-color: transparent !important;
+}
+.el-menu--horizontal > .el-menu-item:hover {
+  color: #ffffff !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
 }

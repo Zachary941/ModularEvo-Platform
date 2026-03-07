@@ -36,9 +36,16 @@ EVAL_DATA_PATHS = {
 # 克隆检测数据附属文件
 CLONE_DATA_JSONL = os.path.join(DATASET_ROOT, 'clone_detection', 'data.jsonl')
 
+# ── 合并评测用小数据集 (固定 200 条, 结果确定性可复现) ──
+EVAL_DATA_PATHS_MINI = {
+    'clone_detection': os.path.join(DATASET_ROOT, 'clone_detection', 'eval_200.txt'),
+    'code_search':     os.path.join(DATASET_ROOT, 'code_search', 'eval_200.json'),
+}
+
 # ── 合并方法名映射 (前端显示名 → MergingMethod 内部名) ──
 MERGE_METHODS = {
     'task_arithmetic': 'task_arithmetic',
     'ties':            'ties_merging',
     'dare':            'mask_merging',
+    'modularevo':      'task_arithmetic',  # ModularEvo = 稀疏微调 + task_arithmetic
 }

@@ -43,7 +43,7 @@ class EvalResult(BaseModel):
 
 # ── 合并相关 ──
 class MergeRequest(BaseModel):
-    method: str  # 'task_arithmetic' | 'ties' | 'dare'
+    method: str  # 'task_arithmetic' | 'ties' | 'dare' | 'modularevo'
     scaling_coefficients: List[float] = [0.5, 0.5]
     param_value_mask_rate: float = 0.8  # TIES 专用
     weight_mask_rates: List[float] = [0.5, 0.5]  # DARE 专用

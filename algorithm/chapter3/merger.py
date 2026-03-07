@@ -101,7 +101,7 @@ def apply_merged_params(task, merge_result, device="cuda"):
 
 
 def merge_and_evaluate(method_name, tasks=None, scaling_coefficients=None,
-                       device="cuda", **merge_kwargs):
+                       device="cuda", eval_data_paths=None, **merge_kwargs):
     """合并 + 评测完整流程。
 
     Args:
@@ -109,12 +109,15 @@ def merge_and_evaluate(method_name, tasks=None, scaling_coefficients=None,
         tasks: 要评测的任务列表, 默认全部
         scaling_coefficients: 缩放系数
         device: 'cuda' | 'cpu'
+        eval_data_paths: dict, 可选, 按任务指定评测数据路径
 
     Returns:
         dict: {method, scaling_coefficients, results: {task: eval_metrics}}
     """
     if tasks is None:
         tasks = ['clone_detection', 'code_search']
+    if eval_data_paths is None:
+        eval_data_paths = {}
 
     merge_result = merge_models(method_name, scaling_coefficients=scaling_coefficients,
                                 device=device, **merge_kwargs)
@@ -122,7 +125,10 @@ def merge_and_evaluate(method_name, tasks=None, scaling_coefficients=None,
     results = {}
     for task in tasks:
         merged_model = apply_merged_params(task, merge_result, device)
-        metrics = evaluate_task(task, merged_model, merge_result['tokenizer'])
+        kwargs = {}
+        if task in eval_data_paths:
+            kwargs['data_path'] = eval_data_paths[task]
+        metrics = evaluate_task(task, merged_model, merge_result['tokenizer'], **kwargs)
         results[task] = metrics
 
     return {

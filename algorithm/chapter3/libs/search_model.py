@@ -21,6 +21,7 @@ import csv
 import json
 import logging
 import os
+import random
 import sys
 from io import open
 from sklearn.metrics import f1_score, precision_score, recall_score

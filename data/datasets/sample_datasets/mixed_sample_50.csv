@@ -1,51 +1,398 @@
 "text","label","task_id"
-"is-numeric s: 	true 	try: 		drop to-num s 	catch value-error: 		not   for v in [ ""1"" ""0"" ""3.14"" ""hello"" ""12e3"" ""12ef"" ""-3"" ]: 	!.( v is-numeric v )",216,0
-"using Color, Images, FixedPointNumbers   const M_RGB_Y = reshape(Color.M_RGB_XYZ[2,:], 3)   function rgb2gray(img::Image)     g = red(img)*M_RGB_Y[1] + green(img)*M_RGB_Y[2] + blue(img)*M_RGB_Y[3]     g = clamp(g, 0.0, 1.0)     return grayim(g) end   function gray2rgb(img::Image)     colorspace(im",389,0
-"/*REXX program implements a sleep sort (with numbers entered from the command line (CL).*/ numeric digits 300                               /*over the top,  but what the hey!     */                                                  /*  (above)  ··· from vaudeville.      */ @.=",685,0
-"type point = { x : float; y : float }     let cmpPointX (a : point) (b : point) = compare a.x b.x  let cmpPointY (a : point) (b : point) = compare a.y b.y      let distSqrd (seg : (point * point) option) =   match seg with   | None -> max_float   | Some(line) ->     let a = fst line in     let b",572,0
-"#include <algorithm> #include <iostream>   /* AVL node */ template <class T> class AVLnode { public:     T key;     int balance;     AVLnode *left, *right, *parent;       AVLnode(T k, AVLnode *p) : key(k), balance(0), parent(p),                         left(NULL), right(NULL) {}       ~AVLnode() {",133,0
-"$ include ""seed7_05.s7i"";   include ""bigint.s7i"";   include ""bigrat.s7i"";   const type: mTerms is array array bigInteger;   const array mTerms: testCases is [] (     [] ([] ( 1_, 1_,   2_), [] ( 1_, 1_,   3_)),     [] ([] ( 2_, 1_,   3_), [] ( 1_, 1_,   7_)),     [] ([] ( 4_, 1_,   5_), [] (-1_, 1_,",753,0
-"#include <iostream>   const int WIDTH = 81; const int HEIGHT = 5;   char lines[WIDTH*HEIGHT];   void cantor(int start, int len, int index) { 	int seg = len / 3; 	if (seg == 0) return; 	for (int i = index; i < HEIGHT; i++) { 		for (int j = start + seg; j < start + seg * 2; j++) { 			int pos = i * WID",133,0
-"Local mynum, myfunc",807,0
-"define mean(v);     lvars n = length(v), i, s = 0;     if n = 0 then         return(0);     else         for i from 1 to n do             s + v(i) -> s;         endfor;     endif;     return(s/n); enddefine;",642,0
-"sd(u,v)={   my(r=List());   u=vecsort(u,,8);   v=vecsort(v,,8);   for(i=1,#u,if(!setsearch(v,u[i]),listput(r,u[i])));   for(i=1,#v,if(!setsearch(u,v[i]),listput(r,v[i])));   Vec(r) }; sd([""John"", ""Serena"", ""Bob"", ""Mary"", ""Serena""],[""Jim"", ""Mary"", ""John"", ""Jim"", ""Bob""])",592,0
-"@echo off setlocal enabledelayedexpansion   set ""extensions=.zip .rar .7z .gz .archive .A##""   :loop if ""%~1""=="""" exit /b set onlist=0   for %%i in (%extensions%) do if /i ""%~x1""==""%%i"" set onlist=1   if %onlist%==1 (   echo Filename: ""%~1"" ^| Extension: ""%~x1"" ^| TRUE ) else (   echo Filename: ""%",101,0
-"dec app  :( list ( char ) X list ( char )) -> list ( char ) ; dec i2c  : num -> char; dec i2s  : num -> list(char); dec beer : num -> list(char);   --- app ( nil , w )        <= w  ; --- app (( a  ::  v ), w )        <=( a  ::  app ( v , w )) ;   --- i2c(0) <= '0'; --- i2c(1) <= '1'; --- i2c(2) <= '",339,0
-"10 INPUT ""HOW MANY"";N 20 IF N<1 THEN END 30 DIM C(N) 40 DIM D(N) 50 LET C(1)=1 60 LET D(1)=1 70 FOR J=1 TO N 80 FOR I=1 TO N-J+1 90 PRINT ""  ""; 100 NEXT I 110 FOR I=1 TO J 120 PRINT C(I)"" ""; 130 NEXT I 140 PRINT 150 IF J=N THEN END 160 C(J+1)=1 170 D(J+1)=1 180 FOR I=1 TO J-1 190 D(I+1)=C(I)+C(I+1)",173,0
-"Og hvad, hvis de ikke forstår de spørgsmål, som de træffer beslutning om?",0,1
-"– Herr talman! Även jag vill börja med att tacka Christa Klaß för hennes arbete.",2,1
-"Det kommer att innebära att det blir lättare att köpa och sälja bilar över ländernas gränser.",2,1
-"Kommissærens og Kommissionens forslag om at afskaffe den og udelukkende bevare en destillation i tilfælde af krise var glimrende.",0,1
-"Hvordan kan en revolusjon gi opphav til så vakker kunst mens vi følger revolusjonære som bare skaper kaos?",1,1
-"Jag hoppas att vi av Lissabonmötet kommer att få en klarare bild av hur unionens budget kan bidra till vårt gemensamma mål att skapa nya arbetstillfällen på kontinenten.",2,1
-"Så jeg tog til Californien og direkte over til det nye hovedkvarter.",0,1
-"Vi har ingenting emot ett ökat mellanstatligt samarbetet mellan EU: s medlemsstater eller med andra relevanta stater för att minska arbetslösheten och integrera miljöhänsyn i den ekonomiska politiken. Vi motsätter oss dock varje försök att inskränka medlemsstaternas handlingsfrihet beträffande den e",2,1
-"Kanske har jag till viss del ändrat åsikt, därför att Grekland spelar en mycket värdefull roll när det gäller att leda och samordna det regionala samarbetet.",2,1
-"I direktivets artikel 21 fastsættes det imidlertid, at elproducenter og elleverandørvirksomheder, når medlemsstaterne tillader sådanne, må have egne bygninger, må have datterselskaber og må have særlige kunder, der har direkte forbindelse til deres elnet.",0,1
-"På sørgelige mindedage husker vi i dag på dengang, folkemordene i Rwanda og Burundi begyndte, hvor man også valgte at se den anden vej.",0,1
-"Efter husleje, forbrug, benzin og telefon, så har vi penge tilovers denne måned.",0,1
-"I Buitenwegs betänkande stöder vi speciellt hennes disciplin när det gäller parlamentets budget.",2,1
-"526 U.S. 227119 S.Ct. 1215143 L.Ed.2d 311 JONES v. UNITED STATES(97-6203)116 F.3d 1487, reversed and remanded. SUPREME COURT OF THE UNITED STATES119 S.Ct. 1215143 L.Ed.2d 311 No. 97 6203  NATHANIEL JONES, PETITIONER v. UNITED STATES ON WRIT OF CERTIORARI TO THE UNITED STATES COURT OF APPEALS FOR THE",0,2
-"524 U.S. 357118 S.Ct. 2014141 L.Ed.2d 344 PENNSYLVANIA BOARD OF PROBATION AND PAROLE, Petitioner,v.Keith M. SCOTT. No. 97-581. Supreme Court of the United States Argued March 30, 1998. Decided June 22, 1998.   Syllabus *  A condition of respondent's Pennsylvania parole was that he refrain from ownin",0,2
-"506 U.S. 546 113 S.Ct. 941 122 L.Ed.2d 330 UNITED STATES, Petitionerv.William F. HILL et ux. No. 91-1421. Argued Nov. 2, 1992. Decided Jan. 25, 1993.   Syllabus *  Under § 57(a)(8) of the Internal Revenue Code of 1954, 26 U.S.C. § 57(a)(8) (1976 ed.), ""the excess of the deduction for depletion . . .",11,2
-"519 U.S. 452117 S.Ct. 905137 L.Ed.2d 79 Francis Bernard AUER, et al., Petitioners,v.David A. ROBBINS, et al. No. 95-897. Supreme Court of the United States Argued Dec. 10, 1996. Decided Feb. 19, 1997.   Syllabus *  Petitioners, St. Louis police sergeants and a lieutenant, sued respondent police comm",6,2
-"510 U.S. 517 FOGERTYv.FANTASY, INC. No. 92-1750. Supreme Court of United States. Argued December 8, 1993. Decided March 1, 1994.  After petitioner Fogerty's successful defense of a copyright infringement action filed against him by respondent Fantasy, Inc., the District Court denied his motion for a",5,2
-"528 U.S. 470120 S.Ct. 1029145 L.Ed.2d 985 SyllabusNOTE:  Where it is feasible, a syllabus (headnote) will be released, as is being done in connection with this case, at the time the opinion is issued. The syllabus constitutes no part of the opinion of the Court but has been prepared by the Reporter",0,2
-"510 U.S. 4 IN RE SASSOWER No. 92-8933. Supreme Court of United States. Decided October 12, 1993.*  In the three years prior to this Term, pro se petitioner Sassower had filed 11 petitions. However, in the last four months, he has suddenly increased his filings and now has 10 petitions pending before",1,2
-"535 U.S. 137 HOFFMAN PLASTIC COMPOUNDS, INC.v.NATIONAL LABOR RELATIONS BOARD. No. 00-1595. Supreme Court of the United States. Argued January 15, 2002. Decided March 27, 2002.  CERTIORARI TO THE UNITED STATES COURT OF APPEALS FOR THE DISTRICT OF COLUMBIA CIRCUIT Petitioner hired Jose Castro on the b",1,2
-"537 U.S. 393 SCHEIDLER ET AL.v.NATIONAL ORGANIZATION FOR WOMEN, INC., ET AL. No. 01-1118. Supreme Court of United States. Argued December 4, 2002. Decided February 26, 2003.*  Respondents, an organization that supports the legal availability of abortion and two facilities that perform abortions, fil",4,2
-"519 U.S. 357117 S.Ct. 855137 L.Ed.2d 1 Paul SCHENCK and Dwight Saunders, Petitioners,v.PRO-CHOICE NETWORK OF WESTERN NEW YORK, et al. No. 95-1065. Supreme Court of the United States Argued Oct. 16, 1996. Decided Feb. 19, 1997.   Syllabus *  Respondents, upstate New York abortion doctors and clinics",4,2
-"539 U.S. 111 DOW CHEMICAL CO. ET AL.v.STEPHENSON ET AL. No. 02-271. Supreme Court of United States. Argued February 26, 2003. Decided June 9, 2003.  273 F. 3d 249, vacated and remanded in part, and affirmed by an equally divided Court in part. CERTIORARI TO THE UNITED STATES COURT OF APPEALS FOR THE",8,2
-"536 U.S. 194 UNITED STATESv.DRAYTON et al. No. 01-631. Supreme Court of the United States. Argued April 16, 2002. Decided June 17, 2002.  CERTIORARI TO THE UNITED STATES COURT OF APPEALS FOR THE ELEVENTH CIRCUIT The driver of the bus on which respondents were traveling allowed three police officers",0,2
-"Solve the system of linear equations using matrix methods:  $x+y+z=7$  $2x-3y+2z=0$  $-3x+4y+z=6$",15,3
-"Consider a Stackelberg competition where there are two firms in the market. The demand in the market is given by Q = 100 - P and the cost functions for the two firms are C1(Q1) = 20Q1 and C2(Q2) = 40Q2. The firms choose their quantities sequentially, with firm 1 choosing first and firm 2 choosing se",11,3
-"In how many ways can you choose 3 different colored balls out of a bag containing 5 red balls, 4 blue balls and 6 green balls?",4,3
-"In Traveler's Dilemma, two airline passengers are caught smuggling identical bags that exceed the weight limit, and they face a fine if caught. If each denies knowing the other, the airline cannot prove which one is the owner of the overweight bag, and they will both be fined the same amount, which",11,3
-"In the Chicken Game, two drivers are racing towards each other. If both drivers swerve away from each other, they both receive a payoff of 0. If one driver swerves away and the other doesn't, the driver who doesn't swerve receives a payoff of 3 and the one who swerves receives a payoff of -1. If bot",11,3
-"Solve the following system of equations for x, y, and z:      2x + 3y - z = 5     4x - 2y + 3z = -8     -2x + y - 6z = 10    Is there a solution for this system of equations? If so, what is the solution? If not, explain why not.",15,3
-"What is the intersection cohomology of the complex projective curve given by the equation $y^3 + z^3 = x^3$ in complex projective 3-space?",1,3
-"Suppose you have a graph G with seven vertices and the following edges:  {(1,2), (1,4), (1,5), (2,3), (2,5), (3,6), (4,5), (5,6), (5,7), (6,7)}. Determine the chromatic number of G.",13,3
-"Consider the system of linear equations below:  2x + y - z = 8 x - y + 3z = 6 4x + y + 2z = 9  However, the data in the third equation is noisy and the correct value is actually 4. Solve the system of linear equations with the corrected data and find the values of x, y, and z.",15,3
-"Consider the two polynomial equations:  f(x, y) = x^3 + 2x^2y - xy^2 - 2y^3 - 4x g(x, y) = x^2 + y^2 - 4  Using Bezout's theorem, find the number of intersection points between the curve defined by f(x, y) = 0 and the circle defined by g(x, y) = 0.",1,3
-"What is the number of possible keys for a monoalphabetic substitution cipher if we have a total of 26 letters in the English alphabet?",6,3
-"Find the minimum value of the multivariable function f(x,y) = 2x^2 + 3y^2 - 4x - 6y + 2 using the quasi-Newton method.",18,3
+"eisini hevur hann skrivað nógvar bøkur við andaligum ella samkomuligum innihaldi nevnast kann jeremias hin grátandi profeturin bíblian á føroyskum í hálva øld og frá penni petur hábergs sum er í tveimum bindum","1","1"
+" 
+using System;
+ 
+namespace ApolloniusProblemCalc
+{
+    class Program
+    {
+        static float rs = 0;
+        static float xs = 0;
+        static float ys = 0;
+ 
+        public static void Main(string[] args)
+        {
+            float gx1;
+            float gy1;
+            float gr1;
+            float gx2;
+            float gy2;
+            float gr2;
+            float gx3;
+            float gy3;
+            float gr3;
+ 
+            //----------Enter values for the given circles here------","131","0"
+"
+547 U.S. 28 (2006)
+ILLINOIS TOOL WORKS INC. ET AL.
+v.
+INDEPENDENT INK, INC.
+No. 04-1329.
+Supreme Court of United States.
+Argued November 29, 2005.
+Decided March 1, 2006.
+*29 Andrew J. Pincus argued the cause for petitioners. With him on the briefs were Richard J. Favretto, Christopher J. Kelly, Nickolai G. Levin, and Stewart S. Hudnut.
+*30 Deputy Solicitor General Hungar argued the cause for the United States as amicus curiae urging reversal. With him on the brief were Solicitor General Clement, Acting Assistant Attorney General Barnett, Jeffrey P. Minear, Catherine G. O'Sullivan, Steven J. Mintz, Frances Marshall, John M. Whealan, Cynthia C. Lynch, and Thomas Krause.
+Kathleen M. Sullivan argued the cause for respondent. With her on the briefs were Daniel H. Bromberg, Margret M. Caruso, E","7","2"
+"seedorff debuterede med hyben i og var fra til sin død beboer af bakkehusets gæstebolig","0","1"
+"                 Cite as: 561 U. S. ____ (2010)            1
+
+                          Per Curiam
+
+SUPREME COURT OF THE UNITED STATES
+     DEMARCUS ALI SEARS v. STEPHEN UPTON, 
+
+                   WARDEN 
+
+  ON PETITION FOR WRIT OF CERTIORARI TO THE SUPREME 
+
+                  COURT OF GEORGIA
+
+              No. 09–8854. Decided June 29, 2010 
+
+
+   PER CURIAM.
+   According to an expert who testified during state post
+conviction relief, petitioner Demarcus A. Sears performs at
+or below the bottom first percentile in several measures of
+cognitive functioning and reasoning. The cause of this
+abnormality appears to be significant frontal lobe brain
+damage Sears suffered as a child, as well as drug and
+alcohol abuse in his teens. But because—in the words of
+the state trial court—his counsel co","0","2"
+"sýningin var vel sótt og vakti mikla athygli","2","1"
+"trakten runt horse creek är nära nog obefolkad med mindre än två invånare per kvadratkilometer","5","1"
+"Let (X, d) be a metric space and let {fn} be a sequence of continuous functions from X to R. Suppose fn(x) converges to f(x) for all x in X. If the functions fn are uniformly bounded, i.e. there exists some M > 0 such that |fn(x)| <= M for all n and x in X, prove that the limit function f is also continuous on X. 
+
+Now, for a numerical example, suppose X is the interval [0,1] with the usual Euclidean metric and fn(x) = sin(nπx). Show that fn(x) converges uniformly to the zero function, and hence","23","3"
+"541 U.S. 433
+MIDDLETON, WARDENv.McNEIL.
+No. 03-1028.
+Supreme Court of United States.
+Decided May 3, 2004.
+
+Respondent was charged with murdering her husband after an argument. Under California law, the malice element needed for a murder conviction is negated if one kills out of fear of imminent peril. If that fear is unreasonable but genuine, California's ""imperfect self-defense"" doctrine reduces the crime to voluntary manslaughter. The voluntary manslaughter jury instruction in this case erroneously defined imminent peril, but the prosecutor's closing statement correctly stated the law. Respondent was convicted of second-degree murder. In affirming, the California Court of Appeal acknowledged the erroneous instruction, but found that the instructions as a whole and the prosecutor's argume","0","2"
+"(de longinc (Lst)
+   (let (D NIL  R NIL)
+      (for I Lst
+         (cond
+            ((< I (last D))
+               (for (Y . X) D
+                  (T (> X I) (set (nth D Y) I)) ) )
+            ((< I (car R))
+               (set R I)
+               (when D (set (cdr R) (last D))) )
+            (T (when R (queue 'D (car R)))
+               (push 'R I) ) ) )
+      (flip R) ) )","628","0"
+"Find the minimum value of the function f(x) = 2x^2 - 8x + 7 using the Harmony Search algorithm with the initial population size of 10 and iterate for 100 generations.","18","3"
+"537 U.S. 51
+SPRIETSMA, ADMINISTRATOR OF THE ESTATE OF SPRIETSMA, DECEASEDv.MERCURY MARINE, A DIVISION OF BRUNSWICK CORP.
+No. 01-706.
+Supreme Court of United States.
+Argued October 15, 2002.
+Decided December 3, 2002.
+
+Petitioner's wife was killed in a boating accident when she was struck by the propeller of an outboard motor manufactured by respondent, Mercury Marine, a division of Brunswick Corporation (Brunswick). In his subsequent common-law tort action in Illinois state court, petitioner claimed that Brunswick's motor was unreasonably dangerous because, among other things, it was not protected by a propeller guard. The trial court dismissed the complaint, and the intermediate court affirmed, finding the action expressly pre-empted by the Federal Boat Safety Act of 1971 (FBSA or Act). Th","9","2"
+"What is the smallest prime gap greater than or equal to 20?","17","3"
+"fn main() {
+    loop {
+        println!(""SPAM"");
+    }
+}","716","0"
+"härnösands kommuna hevur umleið íbúgvar","1","1"
+"defmodule Babbage do
+  def problem(n) when rem(n*n,1000000)==269696, do: n
+  def problem(n), do: problem(n+2)
+end
+ 
+IO.puts Babbage.problem(0)","235","0"
+"      N% = 0
+      REPEAT
+        PRINT FN_tobase(N%, 8, 0)
+        N% += 1
+      UNTIL FALSE
+      END
+ 
+      REM Convert N% to string in base B% with minimum M% digits:
+      DEF FN_tobase(N%, B%, M%)
+      LOCAL D%, A$
+      REPEAT
+        D% = N% MOD B%
+        N% DIV= B%
+        IF D%<0 D% += B% : N% -= 1
+        A$ = CHR$(48 + D% - 7*(D%>9)) + A$
+        M% -= 1
+      UNTIL (N%=FALSE OR N%=TRUE) AND M%<=0
+      =A$
+ ","90","0"
+"513 U.S. 352115 S.Ct. 879130 L.Ed.2d 852
+Christine McKENNON, Petitionerv.NASHVILLE BANNER PUBLISHING COMPANY.
+No. 93-1543.
+Supreme Court of the United States
+Argued Nov. 2, 1994.
+Decided Jan. 23, 1995.
+
+
+Syllabus
+*
+
+Alleging that her discharge by respondent Nashville Banner Publishing Company violated the Age Discrimination in Employment Act of 1967 (ADEA), petitioner McKennon filed suit seeking a variety of legal and equitable remedies available under the ADEA, including backpay.  After she admitted in her deposition that she had copied several of the Banner's confidential documents during her final year of employment, the District Court granted summary judgment for the company, holding that McKennon's misconduct was grounds for her termination and that neither backpay nor any other remed","1","2"
+"A communication network is known to have a data transmission rate of 1000 bits/second. Using the Fourier transform, determine the bandwidth of the network. Assume that the bandwidth limit is at the 3dB point and the channel impulse response is a rectangular function with a duration of 10ms.","9","3"
+"belønningsmedaljen fikk økt betydning etter at svenske ordener fra ikke lenger ble tildelt svenske borgere","3","1"
+"Find the solution to the boundary value problem:
+
+$u_{xx}+u_{yy}=0$ , $0<x<\pi$, $-\pi<y<\pi$
+
+$u(0,y)=u(\pi,y)=0$, $u(x,-\pi)=\sin(x)$, $u(x,\pi)=\sin(3x)$","5","3"
+"503 U.S. 607
+112 S.Ct. 1627
+118 L.Ed.2d 255
+UNITED STATES DEPARTMENT OF ENERGY, Petitioner,v.OHIO, et al.  OHIO, et al., Petitioners,  v.  UNITED STATES DEPARTMENT OF ENERGY.
+Nos. 90-1341, 90-1517.
+Argued Dec. 3, 1991.
+Decided April 21, 1992.
+
+
+Syllabus
+
+The Clean Water Act (CWA) and the Resource Conservation and Recovery Act of 1976 (RCRA) prohibit the discharge or disposal of pollutants without a permit, assign primary authority to issue permits to the Environmental Protection Agency (EPA), and allow EPA to authorize a State to supplant the federal permit program with one of its own under specified circumstances.  Respondent State sued petitioner Department of Energy (DOE) over its operation of a uranium-processing plant in Ohio, seeking, among other relief, both state and federal civil ","7","2"
+"println "" ________   ________  ________   ________  ________  ___  ___  _______   ________      ___    ___     ""
+println ""|\\   ___  \\|\\   __  \\|\\   ___  \\|\\   __  \\|\\   __  \\|\\  \\|\\  \\|\\  ___ \\ |\\   __  \\    |\\  \\  /  /|    ""
+println ""\\ \\  \\\\ \\  \\ \\  \\|\\  \\ \\  \\\\ \\  \\ \\  \\|\\  \\ \\  \\|\\  \\ \\  \\\\\\  \\ \\   __/|\\ \\  \\|\\  \\   \\ \\  \\/  / /    ""
+println "" \\ \\  \\\\ \\  \\ \\   __  \\ \\  \\\\ \\  \\ \\  \\\\\\  \\ \\  \\\\\\  \\ \\  \\\\\\  \\ \\","537","0"
+"525 U.S. 113119 S.Ct. 484142 L.Ed.2d 492
+KNOWLES v. IOWA(97-7597)569 N. W. 2d 601, reversed and remanded.
+SUPREME COURT OF THE UNITED STATES119 S.Ct. 484142 L.Ed.2d 492
+No. 97 7597
+
+PATRICK  KNOWLES,  PETITIONER  v.  IOWA
+ON WRIT OF CERTIORARI TO THE SUPREME COURT OF IOWA
+[December 8, 1998]
+Chief Justice Rehnquist delivered the opinion of the Court.
+
+
+1
+An Iowa police officer stopped petitioner Knowles for speeding, but issued him a citation rather than arresting him. The question presented is whether such a procedure authorizes the officer, consistently with the Fourth Amendment, to conduct a full search of the car. We answer this question ""no.""
+
+
+2
+Knowles was stopped in Newton, Iowa, after having been clocked driving 43 miles per hour on a road where the speed limit was 25 miles per hou","0","2"
+"hon hevur ikki færri enn milliónir fylgjarar","1","1"
+"lundegårde er en gårdlandsby på et højt kuperet areal et par kilometer sydvest for gistrup i aalborg kommune","0","1"
+"import extensions;
+ 
+public program()
+{
+    console.printLine(randomGenerator.nextReal());
+    console.printLine(randomGenerator.eval(0,100))
+}","233","0"
+"arten som lever av møkk kan minne om artene i slekten aphodius men har færre lengdestriper på dekkvingene","3","1"
+"århundrede f kr","0","1"
+"(() => {
+ 
+    // jewelCount :: String -> String -> Int
+    const jewelCount = (j, s) => {
+        const js = j.split('');
+        return s.split('')
+            .reduce((a, c) => js.includes(c) ? a + 1 : a, 0)
+    };
+ 
+    // TEST -----------------------------------------------
+    return [
+            ['aA', 'aAAbbbb'],
+            ['z', 'ZZ']
+        ]
+        .map(x => jewelCount(...x))
+})();","378","0"
+"-- Kernighans large earthquake problem
+with Ada.Text_IO;       use Ada.Text_IO;
+with Ada.Strings.Fixed; use Ada.Strings.Fixed;
+use Ada.Strings;
+ 
+procedure Main is
+   Inpt_File : File_Type;
+   Space     : Natural;
+begin
+   Open (File => Inpt_File, Mode => In_File, Name => ""data.txt"");
+   while not End_Of_File (Inpt_File) loop
+      declare
+         Line : String :=
+           Trim (Source => Get_Line (File => Inpt_File), Side => Both);
+      begin
+ 
+         if Line'Length > 0 then
+            S","37","0"
+"Prove that 2 is a prime number.","16","3"
+"Suppose you want to transmit a secret message ""MATH"" using a one-time pad encryption method. Here, each letter in the message is represented by a number (A=0, B=1, C=2, D=3, E=4, F=5, G=6, H=7, I=8, J=9, K=10, L=11, M=12, N=13, O=14, P=15, Q=16, R=17, S=18, T=19, U=20, V=21, W=22, X=23, Y=24, Z=25). Assume that the key for the encryption is a random sequence of numbers generated using a fair coin toss. 
+
+If the key sequence for the encryption is 1101, what is the encrypted message?","6","3"
+"A school has seven classrooms, and students from six different grades (1st to 6th) attend. How many possible ways are there to assign the grades to the classrooms if each classroom can accommodate only one grade and all grades must be assigned?","4","3"
+"535 U.S. 162
+MICKENSv.TAYLOR, WARDEN.
+No. 00-9285.
+Supreme Court of the United States.
+Argued November 5, 2001.
+Decided March 27, 2002.
+
+CERTIORARI TO THE UNITED STATES COURT OF APPEALS FOR THE FOURTH CIRCUIT
+A Virginia jury convicted petitioner of the premeditated murder of Timothy Hall during or following the commission of an attempted forcible sodomy, and sentenced petitioner to death. Petitioner filed a federal habeas petition alleging, inter alia, that he was denied effective assistance of counsel because one of his court-appointed attorneys had a conflict of interest at trial. Petitioner's lead attorney, Bryan Saunders, had represented Hall on assault and concealed-weapons charges at the time of the murder. The same juvenile court judge who dismissed the charges against Hall later ap","0","2"
+"The Playfair cipher uses a 5x5 matrix of letters, with the key determining the order of the letters. If the key is ""PLAYFAIR"" and the plaintext is ""MATH"", what is the encrypted message?","6","3"
+"#!/usr/bin/algol68g-full --script #
+# -*- coding: utf-8 -*- #
+ 
+PR READ ""prelude/errata.a68"" PR;
+PR READ ""prelude/exception.a68"" PR;
+PR READ ""prelude/math_lib.a68"" PR;
+ 
+CO REQUIRED BY ""prelude/graph_2d.a68"" CO
+  MODE GREAL= REAL; # single precision #
+  FORMAT greal repr = $g(-3,0)$;
+PR READ ""prelude/graph_2d.a68"" PR;
+ 
+[]REAL x = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+[]REAL y = (2.7, 2.8, 31.4, 38.1, 58.0, 76.2, 100.5, 130.0, 149.3, 180.0);
+ 
+test:(
+  REF GRAPHDD test graph = INIT LOC GRAPHDD;
+  type","21","0"
+"Solve the following system of linear equations using Gaussian elimination:
+
+- 4x + 2y - z = 6
+- 3x - y + 2z = 3
+- -2x + 3y + 5z = 1
+
+Find the values of x, y, and z that make all three equations true.","18","3"
+"MODE YIELDINT = PROC(INT)VOID;
+ 
+PROC gen factors = (INT n, YIELDINT yield)VOID: (
+  FOR i FROM 1 TO ENTIER sqrt(n) DO
+    IF n MOD i = 0 THEN
+      yield(i); 
+      INT other = n OVER i;
+      IF i NE other THEN yield(n OVER i) FI
+    FI
+  OD
+);
+ 
+[]INT nums2factor = (45, 53, 64);
+ 
+FOR i TO UPB nums2factor DO
+  INT num = nums2factor[i];
+  STRING sep := "": "";
+  print(num);
+# FOR INT j IN # gen factors(num, # ) DO ( #
+##   (INT j)VOID:(
+       print((sep,whole(j,0))); 
+       sep:="", ""
+# OD # ))","21","0"
+"514 U.S. 268115 S.Ct. 1477131 L.Ed.2d 374
+Donna E. SHALALA, Secretary of Health and Human  Services, Petitioner,v.Margaret WHITECOTTON et al.
+No. 94-372.
+Supreme Court of the United States
+Argued Feb. 28, 1995.
+Decided April 18, 1995.
+
+
+Syllabus
+*
+
+Respondents, Margaret Whitecotton and her parents, filed a claim for compensation under the National Childhood Vaccine Injury Act, alleging that Margaret had suffered encephalopathy as a result of her vaccination against diphtheria, pertussis, and tetanus (DPT).  Under the Act, a claimant who, like Margaret, does not attempt to prove actual causation must make out a prima facie case by showing that ""the first symptom or manifestation of the onset . . . of any . . . [listed] condition . . . occurred within the time period after vaccine administra","7","2"
+"519 U.S. 248117 S.Ct. 796136 L.Ed.2d 736
+INGALLS SHIPBUILDING, INC., et al., Petitioners,v.DIRECTOR, OFFICE OF WORKERS' COMPENSATION PROGRAMS, DEPARTMENT OF LABOR, et al.
+No. 95-1081.
+Supreme Court of the United States
+Argued Nov. 12, 1996.
+Decided Feb. 18, 1997.
+
+
+Syllabus
+*
+
+While working for petitioner Ingalls as a shipfitter, Jefferson Yates was exposed to asbestos.  After he was diagnosed as suffering from asbestosis and related conditions, he filed a claim for disability benefits under the Longshore and Harbor Workers' Compensation Act (""LHWCA'' or ""Act'').  Ingalls admitted compensability and eventually settled with Mr. Yates, who, in the meantime, had sued the manufacturers and suppliers of the asbestos products that were allegedly present in his workplace when he contracted asbest","7","2"
+"A function f(x) is defined as f(x) = e^(2ix) and its Fourier transform is given by F(k). Find F(k) in terms of Dirac delta function.","5","3"
+"tradisjonelt spises tangyuan i samband med feiringen av yuanxiao det kinesiske nyttår og dongzhi","3","1"
+"508 U.S. 22
+113 S.Ct. 1905
+123 L.Ed.2d 584
+Lynwood MOREAU, etc., et al., Petitioners,v.Johnny KLEVENHAGEN, Sheriff, Harris County, Texas, et al.
+No. 92-1.
+Argued March 1, 1993.
+Decided May 3, 1993.
+
+
+Syllabus
+*
+
+Under subsection 7(o)(2)(A) of the Fair Labor Standards Act (FLSA or Act), a state or local government agency may provide its employees compensatory time off, or ""comp time,"" instead of the generally mandated overtime pay, so long as, inter alia, it is done pursuant to ""(i) applicable provisions of a collective bargaining agreement or any other agreement . . . between the . . . agency and representatives of such employees . . ."" or ""(ii) in the case of employees not covered by subclause (i), an agreement . . . arrived at between the employer and the employee before the performance ","6","2"
+"const HOST=""tycho.usno.navy.mil"", PORT=80, dir=""/cgi-bin/timer.pl"";
+get:=""GET %s HTTP/1.0\r\nHost: %s:%s\r\n\r\n"".fmt(dir,HOST,PORT);
+server:=Network.TCPClientSocket.connectTo(HOST,PORT);
+server.write(get);       // send request to web serer
+data:=server.read(True); // read data from web server
+ 
+data.seek(data.find(""UTC"")); // middle of line
+c:=data.seek(Void,0);       // start of line
+line:=data[c,data.seek(Void,1)-c].text;
+line.print(); // the HTML UTC line
+ 
+re:=RegExp(0'|.*(\d\d:\d\d:\d\d)|","1000","0"
+"áttunda þáttaröðin af csi miami var frumsýnd","2","1"
+"elva renn så i austleg retning over deccanplatået gjennom maharashtra karnataka orissa og andhra pradesh","4","1"
+"Let A = {2, 4, 6} and B = {1, 3}. Find (AxB) ∪ (AxC), where C = {5}.","21","3"
+"                 Cite as: 573 U. S. ____ (2014)                  1
+
+                          Per Curiam
+
+SUPREME COURT OF THE UNITED STATES
+     TARA SHENEVA WILLIAMS v. DEBORAH K. 
+
+           JOHNSON, ACTING WARDEN
+
+   ON PETITION FOR WRIT OF CERTIORARI TO THE UNITED 
+
+    STATES COURT OF APPEALS FOR THE NINTH CIRCUIT
+
+              No. 13–9085. Decided July 1, 2014
+
+
+   PER CURIAM.
+   The motion for leave to proceed in forma pauperis and
+the petition for a writ of certiorari are granted. The judg-
+ment of the United States Court of Appeals for the Ninth
+Circuit is vacated, and the case is remanded for considera-
+tion of petitioner’s Sixth Amendment claim under the
+standard set forth in 28 U.S. C. §2254(d).
+
+                                                  It is so ordered.
+","0","2"
+"Global SingletonSemaphore=CreateSemaphore(1)
+ 
+Interface OO_Interface    ; Interface for any value of this type 
+  Get.i()        
+  Set(Value.i) 
+  Destroy()
+EndInterface 
+ 
+Structure OO_Structure ; The *VTable structure  
+  Get.i
+  Set.i
+  Destroy.i
+EndStructure 
+ 
+Structure OO_Var  
+  *VirtualTable.OO_Structure
+  Value.i 
+EndStructure 
+ 
+Procedure OO_Get(*Self.OO_Var)
+  ProcedureReturn *Self\Value
+EndProcedure
+ 
+Procedure OO_Set(*Self.OO_Var, n)
+  *Self\Value = n
+EndProcedure
+ 
+Procedure Crea","659","0"

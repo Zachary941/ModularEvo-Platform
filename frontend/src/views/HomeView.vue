@@ -1,142 +1,122 @@
 <script setup>
 import { useRouter } from 'vue-router'
-import { Monitor, DataAnalysis } from '@element-plus/icons-vue'
 
 const router = useRouter()
+
+const entries = [
+  {
+    emoji: '🧬',
+    title: 'ModularEvo 进化',
+    desc: '基于 CodeBERT 的模型模块化全流程：稀疏化训练 → 下游微调 → 多种合并方法对比评测。',
+    tags: ['稀疏化', '微调', '合并评测'],
+    route: '/modularevo',
+    color: '#7c3aed',
+  },
+  {
+    emoji: '🔀',
+    title: 'AutoRouter 自动组合',
+    desc: '基于 GPT-Neo 125M 的 Router 动态合并方法，支持上传混合数据集进行实时评测。',
+    tags: ['Router', '动态合并', '实时评测'],
+    route: '/autorouter',
+    color: '#10b981',
+  },
+]
 </script>
 
 <template>
-  <div class="home-container">
-    <!-- 系统简介 -->
-    <div class="hero-section">
-      <h1 class="hero-title">TransModular Demo</h1>
-      <p class="hero-subtitle">
-        Transformer 模型模块化与动态合并展示系统
-      </p>
-      <p class="hero-desc">
-        本系统展示了基于 Transformer 的模型模块化方法与动态合并算法。
-        涵盖第三章（CodeBERT 模块化全流程）与第四章（GPT-Neo Router 动态合并）的核心研究成果。
-      </p>
+  <div class="home-view">
+    <!-- Hero -->
+    <div class="hero">
+      <h1 class="hero-title">⚡ LLMOps Platform</h1>
+      <p class="hero-sub">Transformer 模型模块化与动态合并 · 可视化展示系统</p>
     </div>
 
-    <!-- 章节入口卡片 -->
-    <div class="cards-section">
-      <el-row :gutter="24" justify="center">
-        <el-col :xs="24" :sm="12" :md="10">
-          <el-card class="chapter-card" shadow="hover" @click="router.push('/chapter3')">
-            <div class="card-icon">
-              <el-icon :size="48" color="#409eff"><Monitor /></el-icon>
-            </div>
-            <h2 class="card-title">第三章：CodeBERT 模块化</h2>
-            <p class="card-desc">
-              基于 CodeBERT 的模型模块化全流程展示，包含模块化训练、下游任务微调与多种模型合并方法对比。
-            </p>
-            <div class="card-flow">
-              <el-tag>模块化</el-tag>
-              <span class="arrow">→</span>
-              <el-tag type="success">微调</el-tag>
-              <span class="arrow">→</span>
-              <el-tag type="warning">合并</el-tag>
-            </div>
-            <el-button type="primary" class="card-btn">进入 ▶</el-button>
-          </el-card>
-        </el-col>
-
-        <el-col :xs="24" :sm="12" :md="10">
-          <el-card class="chapter-card" shadow="hover" @click="router.push('/chapter4')">
-            <div class="card-icon">
-              <el-icon :size="48" color="#67c23a"><DataAnalysis /></el-icon>
-            </div>
-            <h2 class="card-title">第四章：GPT-Neo Router 动态合并</h2>
-            <p class="card-desc">
-              基于 GPT-Neo 125M 的 Router 动态合并方法展示，支持上传混合数据集进行实时评测。
-            </p>
-            <div class="card-flow">
-              <el-tag>预部署模型</el-tag>
-              <span class="arrow">→</span>
-              <el-tag type="success">上传数据</el-tag>
-              <span class="arrow">→</span>
-              <el-tag type="warning">评测</el-tag>
-            </div>
-            <el-button type="success" class="card-btn">进入 ▶</el-button>
-          </el-card>
-        </el-col>
-      </el-row>
+    <!-- Entry Cards -->
+    <div class="cards-grid">
+      <el-card
+        v-for="item in entries"
+        :key="item.route"
+        class="entry-card"
+        shadow="hover"
+        @click="router.push(item.route)"
+      >
+        <div class="card-emoji">{{ item.emoji }}</div>
+        <h2 class="card-title">{{ item.title }}</h2>
+        <p class="card-desc">{{ item.desc }}</p>
+        <div class="card-tags">
+          <el-tag
+            v-for="t in item.tags"
+            :key="t"
+            size="small"
+            :style="{ borderColor: item.color, color: item.color }"
+            effect="plain"
+          >
+            {{ t }}
+          </el-tag>
+        </div>
+        <el-button :style="{ background: item.color, borderColor: item.color }" type="primary" round>
+          进入 ▶
+        </el-button>
+      </el-card>
     </div>
   </div>
 </template>
 
 <style scoped>
-.home-container {
-  max-width: 1000px;
+.home-view {
+  max-width: 900px;
   margin: 0 auto;
-  padding: 40px 20px;
+  padding: 48px 20px 40px;
 }
-.hero-section {
+.hero {
   text-align: center;
   margin-bottom: 48px;
 }
 .hero-title {
-  font-size: 36px;
+  font-size: 34px;
   font-weight: 700;
-  color: #303133;
-  margin-bottom: 8px;
+  color: var(--primary-color, #5b21b6);
+  margin-bottom: 10px;
 }
-.hero-subtitle {
-  font-size: 18px;
-  color: #606266;
-  margin-bottom: 16px;
+.hero-sub {
+  font-size: 16px;
+  color: var(--text-regular, #4b5563);
 }
-.hero-desc {
-  font-size: 14px;
-  color: #909399;
-  max-width: 640px;
-  margin: 0 auto;
-  line-height: 1.8;
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 28px;
 }
-.cards-section {
-  margin-top: 20px;
-}
-.chapter-card {
+.entry-card {
   text-align: center;
-  padding: 24px 16px;
+  padding: 32px 24px;
   cursor: pointer;
   transition: transform 0.2s;
-  min-height: 320px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  border-radius: 12px;
 }
-.chapter-card:hover {
-  transform: translateY(-4px);
+.entry-card:hover {
+  transform: translateY(-6px);
 }
-.card-icon {
-  margin-bottom: 16px;
+.card-emoji {
+  font-size: 48px;
+  margin-bottom: 12px;
 }
 .card-title {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 600;
-  color: #303133;
+  color: var(--text-primary, #1e1b4b);
   margin-bottom: 12px;
 }
 .card-desc {
   font-size: 14px;
-  color: #606266;
-  line-height: 1.7;
-  margin-bottom: 16px;
+  color: var(--text-regular, #4b5563);
+  line-height: 1.8;
+  margin-bottom: 18px;
 }
-.card-flow {
+.card-tags {
   display: flex;
-  align-items: center;
   justify-content: center;
   gap: 8px;
-  margin-bottom: 20px;
-}
-.arrow {
-  color: #c0c4cc;
-  font-size: 16px;
-}
-.card-btn {
-  margin-top: auto;
+  margin-bottom: 22px;
 }
 </style>

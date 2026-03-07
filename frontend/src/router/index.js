@@ -8,14 +8,19 @@ const routes = [
     component: HomeView,
   },
   {
-    path: '/chapter3',
-    name: 'chapter3',
-    component: () => import('../views/Chapter3View.vue'),
+    path: '/models',
+    name: 'models',
+    component: () => import('../views/ModelsView.vue'),
   },
   {
-    path: '/chapter4',
-    name: 'chapter4',
-    component: () => import('../views/Chapter4View.vue'),
+    path: '/modularevo',
+    name: 'modularevo',
+    component: () => import('../views/ModularEvoView.vue'),
+  },
+  {
+    path: '/autorouter',
+    name: 'autorouter',
+    component: () => import('../views/AutoRouterView.vue'),
   },
 ]
 

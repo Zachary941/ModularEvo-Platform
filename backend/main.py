@@ -7,6 +7,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 
 from core.config import CORS_ORIGINS, API_PREFIX
 from models.database import init_db
@@ -40,9 +41,18 @@ def health_check():
     return {"status": "ok", "version": "0.1.0"}
 
 
+@app.get("/", include_in_schema=False)
+def root():
+    """根路径重定向到 API 文档"""
+    return RedirectResponse(url="/docs")
+
+
 # ---- API 路由注册 ----
 from api.chapter3 import router as ch3_router
 app.include_router(ch3_router, prefix=f"{API_PREFIX}/ch3", tags=["Chapter 3"])
 
-# from api.chapter4 import router as ch4_router
-# app.include_router(ch4_router, prefix=f"{API_PREFIX}/ch4", tags=["Chapter 4"])
+from api.system import router as system_router
+app.include_router(system_router, prefix=f"{API_PREFIX}/system", tags=["System"])
+
+from api.chapter4 import router as ch4_router
+app.include_router(ch4_router, prefix=f"{API_PREFIX}/ch4", tags=["Chapter 4"])
