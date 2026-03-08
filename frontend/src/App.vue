@@ -25,7 +25,7 @@ import AppSidebar from './components/AppSidebar.vue'
 .app-main {
   margin-left: var(--sidebar-width, 220px);
   background: var(--bg-page, #f3f4f6);
-  padding: 24px;
+  padding: 16px;
   min-height: calc(100vh - var(--header-height, 56px));
   overflow-y: auto;
 }

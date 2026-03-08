@@ -20,6 +20,42 @@ use([CanvasRenderer, BarChart, TitleComponent, TooltipComponent, GridComponent, 
 /* ======== 卡片 2: 知识图谱 ======== */
 const graphNodes = ref([])
 const graphEdges = ref([])
+const activeRelations = ref([])  // 空数组 = 全部展示
+
+const RELATION_COLORS = {
+  '模块化': { bg: '#fff7ed', border: '#f97316', text: '#c2410c', dot: '#f97316' },
+  '模块微调': { bg: '#ecfdf5', border: '#10b981', text: '#065f46', dot: '#10b981' },
+  '合并': { bg: '#eff6ff', border: '#3b82f6', text: '#1e40af', dot: '#3b82f6' },
+}
+
+const availableRelations = computed(() => {
+  const set = new Set(graphEdges.value.map(e => e.relation))
+  return [...set]
+})
+
+const filteredGraphData = computed(() => {
+  if (!activeRelations.value.length) {
+    return { nodes: graphNodes.value, edges: graphEdges.value }
+  }
+  const edges = graphEdges.value.filter(e => activeRelations.value.includes(e.relation))
+  const nodeIds = new Set()
+  edges.forEach(e => { nodeIds.add(e.source); nodeIds.add(e.target) })
+  const nodes = graphNodes.value.filter(n => nodeIds.has(n.id))
+  return { nodes, edges }
+})
+
+function toggleRelation(rel) {
+  const idx = activeRelations.value.indexOf(rel)
+  if (idx >= 0) {
+    activeRelations.value.splice(idx, 1)
+  } else {
+    activeRelations.value.push(rel)
+  }
+}
+
+function resetRelationFilter() {
+  activeRelations.value = []
+}
 
 /* ======== 卡片 3: 模型信息 ======== */
 const allModels = ref([])
@@ -158,7 +194,7 @@ const terminalLines = ref([])
 const methodOptions = [
   { value: 'task_arithmetic', label: 'Task Arithmetic' },
   { value: 'ties', label: 'TIES Merging' },
-  { value: 'dare', label: 'DARE (Mask Merging)' },
+  { value: 'dare', label: 'DARE' },
   { value: 'modularevo', label: 'ModularEvo' },
 ]
 
@@ -314,8 +350,8 @@ const mergeCompareOption = computed(() => {
   const colors = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4']
   return {
     tooltip: { trigger: 'axis' },
-    legend: { bottom: 0, textStyle: { fontSize: 11 } },
-    grid: { left: 60, right: 16, top: 16, bottom: 40 },
+    legend: { bottom: 0, textStyle: { fontSize: 11 }, itemWidth: 14, itemGap: 8 },
+    grid: { left: 60, right: 16, top: 16, bottom: 50 },
     xAxis: {
       type: 'category',
       data: tasks.map(t => taskLabel[t]),
@@ -403,10 +439,27 @@ onMounted(async () => {
           <span class="card-title">知识图谱 — CodeBERT 模型关系</span>
         </div>
       </template>
+      <div class="graph-filter-bar" v-if="availableRelations.length">
+        <button
+          class="filter-tag" :class="{ active: activeRelations.length === 0 }"
+          @click="resetRelationFilter"
+        ><span class="filter-dot" style="background: #6366f1"></span>全部</button>
+        <button
+          v-for="rel in availableRelations" :key="rel"
+          class="filter-tag" :class="{ active: activeRelations.includes(rel) }"
+          :style="{
+            '--tag-bg': (RELATION_COLORS[rel] || {}).bg || '#f5f3ff',
+            '--tag-border': (RELATION_COLORS[rel] || {}).border || '#7c3aed',
+            '--tag-text': (RELATION_COLORS[rel] || {}).text || '#5b21b6',
+            '--tag-dot': (RELATION_COLORS[rel] || {}).dot || '#7c3aed',
+          }"
+          @click="toggleRelation(rel)"
+        ><span class="filter-dot" :style="{ background: (RELATION_COLORS[rel] || {}).dot || '#7c3aed' }"></span>{{ rel }}</button>
+      </div>
       <KnowledgeGraph
         v-if="graphNodes.length"
-        :nodes="graphNodes"
-        :edges="graphEdges"
+        :nodes="filteredGraphData.nodes"
+        :edges="filteredGraphData.edges"
         height="360px"
       />
       <el-empty v-else description="加载中..." />
@@ -617,7 +670,49 @@ onMounted(async () => {
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 14px;
+}
+
+/* 知识图谱筛选栏 */
+.graph-filter-bar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.filter-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 2px solid #e5e7eb;
+  background: #fff;
+  color: #6b7280;
+  transition: all 0.2s ease;
+  outline: none;
+}
+.filter-tag:hover {
+  border-color: var(--tag-border, #7c3aed);
+  color: var(--tag-text, #5b21b6);
+  background: var(--tag-bg, #f5f3ff);
+}
+.filter-tag.active {
+  border-color: var(--tag-border, #7c3aed);
+  background: var(--tag-bg, #f5f3ff);
+  color: var(--tag-text, #5b21b6);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+.filter-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
 /* 通用卡片 */
@@ -647,13 +742,13 @@ onMounted(async () => {
 .algo-step {
   flex: 1;
   text-align: center;
-  padding: 16px 12px;
+  padding: 12px 10px;
   background: var(--primary-bg, #f5f3ff);
   border-radius: 10px;
 }
 .step-emoji {
-  font-size: 36px;
-  margin-bottom: 8px;
+  font-size: 30px;
+  margin-bottom: 6px;
 }
 .algo-step h4 {
   font-size: 14px;
@@ -677,8 +772,8 @@ onMounted(async () => {
 /* ── 卡片 3: 模型信息 ── */
 .model-info-layout {
   display: flex;
-  gap: 24px;
-  min-height: 220px;
+  gap: 16px;
+  min-height: 200px;
 }
 .model-tree-wrap {
   flex-shrink: 0;
@@ -716,7 +811,7 @@ onMounted(async () => {
 .model-detail-card {
   border: 2px solid;
   border-radius: 14px;
-  padding: 20px 24px;
+  padding: 16px 20px;
   height: 100%;
   box-sizing: border-box;
   transition: all 0.3s ease;
@@ -724,13 +819,13 @@ onMounted(async () => {
 .model-card-header {
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin-bottom: 16px;
-  padding-bottom: 14px;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
   border-bottom: 1px solid rgba(0,0,0,0.08);
 }
 .model-card-icon {
-  font-size: 36px;
+  font-size: 30px;
 }
 .model-card-title-group {
   display: flex;

@@ -281,7 +281,7 @@ onUnmounted(() => {
   font-size: 11px;
   color: var(--text-secondary);
   flex-shrink: 0;
-  width: 32px;
+  white-space: nowrap;
 }
 
 .mini-progress {
@@ -290,7 +290,8 @@ onUnmounted(() => {
 
 .mini-progress :deep(.el-progress__text) {
   font-size: 11px !important;
-  min-width: 32px;
+  min-width: 30px;
+  white-space: nowrap;
 }
 
 .status-list {

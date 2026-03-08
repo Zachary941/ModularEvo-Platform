@@ -113,14 +113,21 @@ async def upload_dataset(file: UploadFile = File(...)):
     if ext not in ('.csv', '.json'):
         raise HTTPException(400, "仅支持 .csv 或 .json 格式")
 
-    # 保存到临时路径
-    safe_name = f"{uuid.uuid4().hex[:8]}_{file.filename}"
+    # 保存到临时路径 (文件名仅保留扩展名，用 uuid 前缀避免冲突)
+    safe_name = f"{uuid.uuid4().hex[:8]}{ext}"
     save_path = _UPLOAD_DIR / safe_name
-    with open(save_path, "wb") as f:
+
+    try:
         content = await file.read()
         if len(content) > 10 * 1024 * 1024:  # 10MB limit
             raise HTTPException(400, "文件大小不能超过 10MB")
-        f.write(content)
+        with open(save_path, "wb") as f:
+            f.write(content)
+    except HTTPException:
+        raise
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(500, f"文件保存失败: {str(e)}")
 
     try:
         from demo_system.algorithm.chapter4.adapter import parse_uploaded_data
@@ -143,6 +150,8 @@ async def upload_dataset(file: UploadFile = File(...)):
             task_distribution=task_dist,
             preview=preview,
         )
+    except HTTPException:
+        raise
     except Exception as e:
         # 清理失败的上传文件
         save_path.unlink(missing_ok=True)
@@ -279,17 +288,17 @@ def get_graph():
         GraphEdge(source="gpt-neo", target="ft-law", relation="微调", style="solid"),
         GraphEdge(source="gpt-neo", target="ft-math", relation="微调", style="solid"),
         # 模块化 (task vector)
-        GraphEdge(source="ft-code", target="tv-code", relation="τ = FT−Base", style="dashed"),
-        GraphEdge(source="ft-langid", target="tv-langid", relation="τ = FT−Base", style="dashed"),
-        GraphEdge(source="ft-law", target="tv-law", relation="τ = FT−Base", style="dashed"),
-        GraphEdge(source="ft-math", target="tv-math", relation="τ = FT−Base", style="dashed"),
-        # Router 输入
-        GraphEdge(source="tv-code", target="router", relation="输入", style="dotted"),
-        GraphEdge(source="tv-langid", target="router", relation="输入", style="dotted"),
-        GraphEdge(source="tv-law", target="router", relation="输入", style="dotted"),
-        GraphEdge(source="tv-math", target="router", relation="输入", style="dotted"),
+        GraphEdge(source="ft-code", target="tv-code", relation="任务向量", style="dashed"),
+        GraphEdge(source="ft-langid", target="tv-langid", relation="任务向量", style="dashed"),
+        GraphEdge(source="ft-law", target="tv-law", relation="任务向量", style="dashed"),
+        GraphEdge(source="ft-math", target="tv-math", relation="任务向量", style="dashed"),
+        # Router 路由
+        GraphEdge(source="tv-code", target="router", relation="路由", style="dotted"),
+        GraphEdge(source="tv-langid", target="router", relation="路由", style="dotted"),
+        GraphEdge(source="tv-law", target="router", relation="路由", style="dotted"),
+        GraphEdge(source="tv-math", target="router", relation="路由", style="dotted"),
         # 合并
-        GraphEdge(source="router", target="merged", relation="α 合并", style="solid"),
+        GraphEdge(source="router", target="merged", relation="合并", style="solid"),
         GraphEdge(source="gpt-neo", target="merged", relation="基座", style="solid"),
     ]
     return GraphResponse(nodes=nodes, edges=edges)
