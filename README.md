@@ -6,7 +6,7 @@
 [![Vue3](https://img.shields.io/badge/Vue.js-35495E?style=flat&logo=vue.js&logoColor=4FC08D)](https://vuejs.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=flat&logo=fastapi)](https://fastapi.tiangolo.com/)
 
-**AI-CoEvo-Platform** 是一个基于神经网络模块化思想的 **AI 模型协同演化与动态合并全栈原型系统**。本系统旨在解决深度学习模型在多任务持续微调中面临的「灾难性遗忘」、「知识孤岛」以及「多任务混合场景下静态融合不灵活」等痛点，提供了一套从底层算法到上层可视化交互的完整演示工作台。
+**AI-CoEvo-Platform** 是一个基于神经网络模块化思想的 **AI 模型协同演化原型系统**。本系统旨在解决深度学习模型在多任务持续演化中面临的「权重冲突」、「知识孤岛」以及「多任务混合场景下静态融合不灵活」等痛点，提供了从底层算法到上层可视化交互的完整工程落地实践。
 
 ## 📸 系统截图
 
@@ -15,7 +15,8 @@
 
 ![首页](pic/0.png)
 
-### ModularEvo 模块化进化
+### 基于模块化方法的AI模型协同演化框架（ModularEvo）
+
 > 基于 CodeBERT 的知识图谱可视化、模型家族树、稀疏模块加载分析。
 
 ![知识图谱与模型家族树](pic/1.png)
@@ -26,7 +27,7 @@
 
 ![模型合并多方法对比实验](pic/3.png)
 
-### AutoRouter 自动组合
+### 面向AI模型协同演化的模型合并优化方法 (AutoRouter)
 > 基于 GPT-Neo 125M 的自适应路由器，三步流程：输入识别 → 权重组合 → 自动匹配分类头。
 
 ![AutoRouter 算法流程与 GPT-Neo 知识图谱](pic/4.png)
