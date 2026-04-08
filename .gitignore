@@ -31,5 +31,6 @@ frontend/node_modules/
 data/
 
 *.png
+!pic/*.png
 *.md
 !README.md
