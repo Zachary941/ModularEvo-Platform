@@ -1,4 +1,4 @@
-# AI-CoEvo-Platform
+# ModularEvo-Platform
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
@@ -6,7 +6,7 @@
 [![Vue3](https://img.shields.io/badge/Vue.js-35495E?style=flat&logo=vue.js&logoColor=4FC08D)](https://vuejs.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=flat&logo=fastapi)](https://fastapi.tiangolo.com/)
 
-**AI-CoEvo-Platform** 是一个基于神经网络模块化思想的 **AI 模型协同演化原型系统**。本系统旨在解决深度学习模型在多任务持续演化中面临的「权重冲突」、「知识孤岛」以及「多任务混合场景下静态融合不灵活」等痛点，提供了从底层算法到上层可视化交互的完整工程落地实践。
+**ModularEvo-Platform** 是一个基于神经网络模块化思想的 **AI 模型协同演化原型系统**。本系统旨在解决深度学习模型在多任务持续演化中面临的「权重冲突」、「知识孤岛」以及「多任务混合场景下静态融合不灵活」等痛点，提供了从底层算法到上层可视化交互的完整工程落地实践。
 
 ## 📸 系统截图
 
@@ -77,7 +77,7 @@
 ## 📂 项目结构
 
 ```
-AI-CoEvo-Platform/
+ModularEvo-Platform/
 ├── algorithm/                  # 核心算法层
 │   ├── chapter3/               #   ModularEvo 模块化合并
 │   │   ├── config.py           #     配置（模型路径、任务定义）
@@ -126,8 +126,8 @@ AI-CoEvo-Platform/
 
 ```bash
 # 1. 克隆项目
-git clone https://github.com/Zachary941/AI-CoEvo-Platform.git
-cd AI-CoEvo-Platform
+git clone https://github.com/Zachary941/ModularEvo-Platform.git
+cd ModularEvo-Platform
 
 # 2. 安装后端依赖
 pip install fastapi uvicorn torch transformers sqlalchemy aiofiles
