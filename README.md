@@ -8,6 +8,8 @@
 
 **ModularEvo-Platform** 是一个基于神经网络模块化思想的 **AI 模型协同演化原型系统**。本系统旨在解决深度学习模型在多任务持续演化中面临的「权重冲突」、「知识孤岛」以及「多任务混合场景下静态融合不灵活」等痛点，提供了从底层算法到上层可视化交互的完整工程落地实践。
 
+本系统依赖的主要算法来自我们的论文：[ModularEvo: Evolving Multi-Task Models via Neural Network Modularization and Composition](doc/ModularEvo.pdf)。
+
 ## 📸 系统截图
 
 ### 首页总览
